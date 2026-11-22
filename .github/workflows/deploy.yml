@@ -1,0 +1,79 @@
+name: Deploy environment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment name understood by infra/tf.sh and scripts/deploy.sh.
+        type: string
+        required: true
+      terraform_version:
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Apply and deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Holds the identifiers below as secrets; restricted to the main branch.
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    # Queues rather than cancels: interrupting an apply can leave a held state
+    # lock or a partly applied change.
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GH_REPOSITORY_ID: ${{ github.repository_id }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "0"
+    steps:
+      # Logs of a public repository are public. The project number is only a
+      # substring of a secret, so GitHub would not redact it by itself.
+      - name: Mask project number
+        env:
+          WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          project_number="$(cut -d/ -f2 <<< "$WORKLOAD_IDENTITY_PROVIDER")"
+          [[ -n "$project_number" ]] || { echo "Missing environment secrets" >&2; exit 1; }
+          echo "::add-mask::$project_number"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Writes gha-creds-*.json into the workspace. It is git- and docker-ignored,
+      # so the tree stays clean and images get the plain commit SHA tag.
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ inputs.terraform_version }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: infra/tf.sh "$ENVIRONMENT" init -lockfile=readonly
+
+      - name: Terraform plan
+        run: infra/tf.sh "$ENVIRONMENT" plan -lock-timeout=5m -out=ci.tfplan
+
+      - name: Terraform apply
+        run: infra/tf.sh "$ENVIRONMENT" apply -lock-timeout=5m ci.tfplan
+
+      - name: Deploy services
+        run: scripts/deploy.sh "$ENVIRONMENT" all
