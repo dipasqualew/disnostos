@@ -4,9 +4,10 @@ import { ForgotPassword, ResetPassword, SignIn } from './auth/screens';
 import { AUTH_ACTION_PATH, Link, useRouter } from './router';
 import { createTracesApi, type TracesApi } from './traces/api';
 import { clearAllDrafts } from './traces/drafts';
-import { TraceEditor } from './traces/TraceEditor';
 import { TraceList } from './traces/TraceList';
+import { ToastProvider, useToasts } from './traces/toasts';
 import { TraceView } from './traces/TraceView';
+import { LogOut } from 'lucide-react';
 
 export { AUTH_ACTION_PATH };
 
@@ -22,29 +23,27 @@ function takeResetCode(): string | null {
 
 type Route =
   | { name: 'list' }
-  | { name: 'new' }
   | { name: 'view'; id: string }
-  | { name: 'edit'; id: string }
+  | { name: 'redirect'; to: string }
   | { name: 'missing' };
 
 export function matchRoute(path: string): Route {
   if (path === '/') return { name: 'list' };
-  if (path === '/traces/new') return { name: 'new' };
+  // Writing now starts on the home page, and every trace page is editable.
+  if (path === '/traces/new') return { name: 'redirect', to: '/' };
   const match = /^\/traces\/([^/]+)(\/edit)?\/?$/.exec(path);
   if (!match) return { name: 'missing' };
-  return match[2] ? { name: 'edit', id: match[1]! } : { name: 'view', id: match[1]! };
+  return match[2] ? { name: 'redirect', to: `/traces/${match[1]!}` } : { name: 'view', id: match[1]! };
 }
 
 function Page({ api, route }: { api: TracesApi; route: Route }) {
   switch (route.name) {
     case 'list':
       return <TraceList api={api} />;
-    case 'new':
-      return <TraceEditor key="new" api={api} traceId={null} />;
     case 'view':
       return <TraceView key={route.id} api={api} traceId={route.id} />;
-    case 'edit':
-      return <TraceEditor key={route.id} api={api} traceId={route.id} />;
+    case 'redirect':
+      return null;
     case 'missing':
       return (
         <>
@@ -56,11 +55,27 @@ function Page({ api, route }: { api: TracesApi; route: Route }) {
 }
 
 function Journal() {
+  const { client } = useAuth();
+  const api = useMemo(() => createTracesApi(client), [client]);
+  return (
+    <ToastProvider api={api}>
+      <JournalShell api={api} />
+    </ToastProvider>
+  );
+}
+
+function JournalShell({ api }: { api: TracesApi }) {
   const { client, user } = useAuth();
   const { path, navigate, guard } = useRouter();
-  const api = useMemo(() => createTracesApi(client), [client]);
+  const { flushDeletes } = useToasts();
   const main = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
+  const route = matchRoute(path);
+  const redirectTo = route.name === 'redirect' ? route.to : null;
+
+  useEffect(() => {
+    if (redirectTo) navigate(redirectTo, { replace: true });
+  }, [redirectTo, navigate]);
 
   // Moves keyboard and screen reader users to the new page's content.
   useEffect(() => {
@@ -76,11 +91,15 @@ function Journal() {
   }, [path, navigate]);
 
   function signOut() {
-    guard(() => {
-      clearAllDrafts();
-      navigate('/', { force: true, replace: true });
-      void client.signOut();
-    });
+    guard(
+      () => {
+        clearAllDrafts();
+        navigate('/', { force: true, replace: true });
+        // Deletes still in their undo window need this session's token.
+        void flushDeletes().finally(() => client.signOut());
+      },
+      { includeHeld: true },
+    );
   }
 
   return (
@@ -89,12 +108,14 @@ function Journal() {
       <header className="masthead">
         <Link to="/" className="wordmark">disnostos</Link>
         <nav aria-label="Account">
-          <span className="muted small account">{user?.email}</span>
-          <button type="button" className="link" onClick={signOut}>Sign out</button>
+          <span className="account">{user?.email}</span>
+          <button type="button" className="icon-button" aria-label="Sign out" title="Sign out" onClick={signOut}>
+            <LogOut size={16} aria-hidden="true" />
+          </button>
         </nav>
       </header>
       <main id="content" ref={main} tabIndex={-1} className="page">
-        <Page api={api} route={matchRoute(path)} />
+        <Page api={api} route={route} />
       </main>
     </div>
   );

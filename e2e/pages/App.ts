@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 import { ForgotPasswordPage, ResetPasswordPage, SignInPage } from "./AuthPages";
-import { TraceEditorPage } from "./TraceEditorPage";
 import { TraceListPage } from "./TraceListPage";
 import { TraceViewPage } from "./TraceViewPage";
 
@@ -10,7 +9,6 @@ export class App {
   readonly forgotPassword: ForgotPasswordPage;
   readonly resetPassword: ResetPasswordPage;
   readonly list: TraceListPage;
-  readonly editor: TraceEditorPage;
   readonly trace: TraceViewPage;
 
   constructor(page: Page) {
@@ -18,7 +16,6 @@ export class App {
     this.forgotPassword = new ForgotPasswordPage(page);
     this.resetPassword = new ResetPasswordPage(page);
     this.list = new TraceListPage(page);
-    this.editor = new TraceEditorPage(page);
     this.trace = new TraceViewPage(page);
   }
 }

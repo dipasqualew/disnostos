@@ -20,8 +20,10 @@ type NavigateOptions = { replace?: boolean; force?: boolean };
 type Router = Location & {
   navigate(to: string, options?: NavigateOptions): void;
   /** Runs an action that would leave the page, asking first if there is unsaved work. */
-  guard(action: () => void): void;
+  guard(action: () => void, options?: { includeHeld?: boolean }): void;
   setUnsaved(onDiscard: (() => void) | null): void;
+  /** Writing that survives navigation, so it only needs protecting from sign-out. */
+  setHeld(onDiscard: (() => void) | null): void;
 };
 
 const RouterContext = createContext<Router | null>(null);
@@ -39,6 +41,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<(() => void) | null>(null);
   const current = useRef(toUrl(location));
   const discard = useRef<(() => void) | null>(null);
+  const held = useRef<(() => void) | null>(null);
 
   const sync = useCallback(() => {
     const next = readLocation();
@@ -56,8 +59,8 @@ export function RouterProvider({ children }: { children: ReactNode }) {
     [sync],
   );
 
-  const guard = useCallback((action: () => void) => {
-    if (discard.current) setPending(() => action);
+  const guard = useCallback((action: () => void, options: { includeHeld?: boolean } = {}) => {
+    if (discard.current || (options.includeHeld && held.current)) setPending(() => action);
     else action();
   }, []);
 
@@ -71,6 +74,10 @@ export function RouterProvider({ children }: { children: ReactNode }) {
 
   const setUnsaved = useCallback((onDiscard: (() => void) | null) => {
     discard.current = onDiscard;
+  }, []);
+
+  const setHeld = useCallback((onDiscard: (() => void) | null) => {
+    held.current = onDiscard;
   }, []);
 
   useEffect(() => {
@@ -96,8 +103,8 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   }, [commit, sync]);
 
   const value = useMemo(
-    () => ({ ...location, navigate, guard, setUnsaved }),
-    [location, navigate, guard, setUnsaved],
+    () => ({ ...location, navigate, guard, setUnsaved, setHeld }),
+    [location, navigate, guard, setUnsaved, setHeld],
   );
 
   return (
@@ -114,6 +121,8 @@ export function RouterProvider({ children }: { children: ReactNode }) {
             const action = pending;
             discard.current?.();
             discard.current = null;
+            held.current?.();
+            held.current = null;
             setPending(null);
             action();
           }}

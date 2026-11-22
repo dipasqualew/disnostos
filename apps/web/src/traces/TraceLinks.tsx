@@ -1,10 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link2, Plus, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { formatCalendarDate } from '../lib/dates';
 import { Link } from '../router';
 import { ApiError, errorMessage, isAbort, type Trace, type TraceLink, type TracesApi } from './api';
+import { plainText } from './markdown';
 import { Loading, Notice } from './ui';
 
 const PICKER_PAGE_SIZE = 100;
+
+const nameOf = (trace: Pick<Trace, 'title'> & { body?: string }) =>
+  trace.title ?? (trace.body ? plainText(trace.body).slice(0, 70) : '');
+const linkName = (link: TraceLink) => link.trace.title ?? formatCalendarDate(link.trace.writtenOn);
 
 /** Traces that can still be linked: not this one, not already linked, matching the search. */
 export function linkCandidates(
@@ -43,7 +49,6 @@ function LinkPicker({ api, traceId, links, onLinked, onConflict, onClose }: Pick
   const [attempt, setAttempt] = useState(0);
   const [moreBusy, setMoreBusy] = useState(false);
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,7 +75,6 @@ function LinkPicker({ api, traceId, links, onLinked, onConflict, onClose }: Pick
     () => linkCandidates(traces, traceId, links, query),
     [traces, traceId, links, query],
   );
-  const selectedIsVisible = candidates.some((trace) => trace.id === selected);
 
   async function loadOlder() {
     if (!cursor) return;
@@ -87,23 +91,16 @@ function LinkPicker({ api, traceId, links, onLinked, onConflict, onClose }: Pick
     }
   }
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!selected || !selectedIsVisible) {
-      setError('Choose a trace to link.');
-      return;
-    }
+  async function choose(target: Trace) {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      onLinked(await api.link(traceId, selected, note.trim() || null));
+      onLinked(await api.link(traceId, target.id, note.trim() || null));
       onClose();
     } catch (caught) {
       setError(errorMessage(caught));
-      if (caught instanceof ApiError && caught.status === 409) {
-        setSelected(null);
-        onConflict();
-      }
+      if (caught instanceof ApiError && caught.status === 409) onConflict();
     } finally {
       setBusy(false);
     }
@@ -113,53 +110,50 @@ function LinkPicker({ api, traceId, links, onLinked, onConflict, onClose }: Pick
   if (status === 'error') return <Notice onRetry={() => setAttempt((n) => n + 1)}>{loadError}</Notice>;
 
   return (
-    <form className="picker" onSubmit={submit}>
-      <label>
-        Search your traces
-        <input type="search" value={query} autoFocus onChange={(e) => setQuery(e.target.value)} />
-      </label>
-      <fieldset>
-        <legend className="sr-only">Trace to link</legend>
-        {candidates.length === 0 && (
-          <p className="muted">{query ? 'No matching traces.' : 'No other traces to link yet.'}</p>
-        )}
-        {candidates.length > 0 && (
-          <ul className="candidates">
-            {candidates.map((trace) => (
-              <li key={trace.id}>
-                <label className="candidate">
-                  <input
-                    type="radio"
-                    name="link-target"
-                    value={trace.id}
-                    checked={selected === trace.id}
-                    onChange={() => setSelected(trace.id)}
-                  />
-                  <span>
-                    <span className="row-title">{trace.title ?? 'Untitled'}</span>
-                    <span className="muted small">{formatCalendarDate(trace.writtenOn)}</span>
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-        {cursor && (
-          <button type="button" className="link" disabled={moreBusy} onClick={() => void loadOlder()}>
-            {moreBusy ? 'Loading…' : 'Search older traces'}
-          </button>
-        )}
-      </fieldset>
-      <label>
-        Why these connect (optional)
-        <input type="text" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
-      </label>
+    <div
+      className="picker"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onClose();
+      }}
+    >
+      <input
+        type="search"
+        aria-label="Search your traces"
+        placeholder="Search your traces…"
+        value={query}
+        autoFocus
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <input
+        type="text"
+        aria-label="Why these connect (optional)"
+        placeholder="Why these connect (optional)"
+        value={note}
+        maxLength={500}
+        onChange={(event) => setNote(event.target.value)}
+      />
+      {candidates.length === 0 && (
+        <p className="muted">{query ? 'No matching traces.' : 'No other traces to link yet.'}</p>
+      )}
+      {candidates.length > 0 && (
+        <ul className="candidates" aria-label="Traces to link">
+          {candidates.map((trace) => (
+            <li key={trace.id}>
+              <button type="button" disabled={busy} onClick={() => void choose(trace)}>
+                <span className="candidate-name">{nameOf(trace) || 'Image'}</span>
+                <span className="muted small">{formatCalendarDate(trace.writtenOn)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {cursor && (
+        <button type="button" className="text-button" disabled={moreBusy} onClick={() => void loadOlder()}>
+          {moreBusy ? 'Loading…' : 'Search older traces'}
+        </button>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
-      <div className="actions">
-        <button type="button" className="quiet" onClick={onClose}>Cancel</button>
-        <button type="submit" disabled={busy || !selectedIsVisible}>{busy ? 'Linking…' : 'Link trace'}</button>
-      </div>
-    </form>
+    </div>
   );
 }
 
@@ -167,12 +161,13 @@ type Props = {
   api: TracesApi;
   traceId: string;
   links: TraceLink[];
+  startOpen?: boolean;
   onChange(links: TraceLink[]): void;
   onRefresh(): void;
 };
 
-export function TraceLinks({ api, traceId, links, onChange, onRefresh }: Props) {
-  const [picking, setPicking] = useState(false);
+export function TraceLinks({ api, traceId, links, startOpen = false, onChange, onRefresh }: Props) {
+  const [picking, setPicking] = useState(startOpen);
   const [unlinking, setUnlinking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -190,11 +185,27 @@ export function TraceLinks({ api, traceId, links, onChange, onRefresh }: Props) 
   }
 
   return (
-    <section className="panel" aria-labelledby="links-heading">
-      <div className="panel-head">
-        <h2 id="links-heading">Linked traces</h2>
+    <section className="trace-links" aria-label="Linked traces">
+      <div className="link-row">
+        {links.map((link) => (
+          <span key={link.id} className="link-pill" title={link.note ?? undefined}>
+            <Link2 size={13} aria-hidden="true" />
+            <Link to={`/traces/${link.trace.id}`}>{linkName(link)}</Link>
+            <button
+              type="button"
+              className="pill-remove"
+              disabled={unlinking === link.id}
+              aria-label={`Unlink ${linkName(link)}`}
+              onClick={() => void unlink(link)}
+            >
+              <X size={13} aria-hidden="true" />
+            </button>
+          </span>
+        ))}
         {!picking && (
-          <button type="button" className="quiet" onClick={() => setPicking(true)}>Link a trace</button>
+          <button type="button" className="chip" onClick={() => setPicking(true)}>
+            <Plus size={14} aria-hidden="true" /> Link a trace
+          </button>
         )}
       </div>
       {error && <p className="error" role="alert">{error}</p>}
@@ -207,29 +218,6 @@ export function TraceLinks({ api, traceId, links, onChange, onRefresh }: Props) 
           onConflict={onRefresh}
           onClose={() => setPicking(false)}
         />
-      )}
-      {links.length === 0 && !picking && <p className="muted">Not linked to any other trace.</p>}
-      {links.length > 0 && (
-        <ul className="links">
-          {links.map((link) => (
-            <li key={link.id}>
-              <div>
-                <Link to={`/traces/${link.trace.id}`}>{link.trace.title ?? 'Untitled'}</Link>
-                <span className="muted small"> · {formatCalendarDate(link.trace.writtenOn)}</span>
-                {link.note && <p className="link-note">{link.note}</p>}
-              </div>
-              <button
-                type="button"
-                className="link"
-                disabled={unlinking === link.id}
-                aria-label={`Unlink ${link.trace.title ?? 'Untitled'}`}
-                onClick={() => void unlink(link)}
-              >
-                {unlinking === link.id ? 'Unlinking…' : 'Unlink'}
-              </button>
-            </li>
-          ))}
-        </ul>
       )}
     </section>
   );

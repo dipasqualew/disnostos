@@ -15,9 +15,11 @@ export function Notice({ children, onRetry }: { children: ReactNode; onRetry?: (
 
 export function Loading({ label = 'Loading…' }: { label?: string }) {
   return (
-    <p className="muted" role="status">
-      {label}
-    </p>
+    <div className="skeleton" role="status" aria-label={label}>
+      <span />
+      <span />
+      <span />
+    </div>
   );
 }
 
