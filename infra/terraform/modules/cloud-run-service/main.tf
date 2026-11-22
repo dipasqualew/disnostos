@@ -36,13 +36,18 @@ variable "max_instances" {
   type = number
 }
 
+variable "memory" {
+  type    = string
+  default = "256Mi"
+}
+
 variable "env" {
   description = "Plain (non-secret) environment variables."
   type        = map(string)
   default     = {}
 }
 
-# Deliberately has no project roles: neither service calls a GCP API yet.
+# Has no roles here. A service that calls a GCP API is granted them by its caller.
 resource "google_service_account" "runtime" {
   project      = var.project_id
   account_id   = var.service_account_id
@@ -70,7 +75,7 @@ resource "google_cloud_run_v2_service" "this" {
         cpu_idle = true
         limits = {
           cpu    = "1"
-          memory = "256Mi"
+          memory = var.memory
         }
       }
 

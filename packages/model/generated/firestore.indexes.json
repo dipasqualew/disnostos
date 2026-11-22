@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collection": "trace",
+      "fields": [
+        {
+          "field": "ownerId",
+          "order": "ASCENDING"
+        },
+        {
+          "field": "writtenOn",
+          "order": "DESCENDING"
+        },
+        {
+          "field": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ]
+}

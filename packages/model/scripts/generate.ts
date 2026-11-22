@@ -21,156 +21,79 @@ const enumConst = (entity: Entity, column: string) =>
 const enumDbName = (entity: Entity, column: string) =>
   column === "visibility" ? "visibility" : `${table(entity)}_${snake(column)}`;
 
-/** Orders entities so that referenced tables are declared first. */
-function sorted(): Entity[] {
-  const byName = new Map(entities.map((entity) => [entity.name, entity]));
-  const seen = new Set<string>();
-  const result: Entity[] = [];
-  const visit = (entity: Entity, path: string[]) => {
-    if (seen.has(entity.name)) return;
-    if (path.includes(entity.name)) {
-      throw new Error(`Reference cycle: ${[...path, entity.name].join(" -> ")}`);
-    }
-    for (const field of Object.values(allFields(entity))) {
-      if (field.type === "ref" && field.to !== entity.name) {
-        visit(byName.get(field.to)!, [...path, entity.name]);
-      }
-    }
-    seen.add(entity.name);
-    result.push(entity);
-  };
-  entities.forEach((entity) => visit(entity, []));
-  return result;
-}
+const TIMESTAMP_FIELDS = ["createdAt", "updatedAt"];
 
-function drizzleColumn(entity: Entity, name: string, field: Field): string {
-  const column = snake(name);
-  let code: string;
-  switch (field.type) {
-    case "text":
-    case "url":
-    case "language":
-      code = `text("${column}")`;
-      break;
-    case "int":
-      code = `integer("${column}")`;
-      break;
-    case "bigint":
-      code = `bigint("${column}", { mode: "number" })`;
-      break;
-    case "float":
-      code = `doublePrecision("${column}")`;
-      break;
-    case "timestamp":
-      code = `timestamp("${column}", { withTimezone: true })`;
-      break;
-    case "json":
-      code = `jsonb("${column}")`;
-      break;
-    case "enum":
-      code = `${enumConst(entity, name)}("${column}")`;
-      break;
-    case "ref":
-      code = `uuid("${column}")`;
-      break;
-  }
-  if (!field.optional) code += ".notNull()";
-  if (name === "visibility") code += `.default("private")`;
-  if (field.unique) code += ".unique()";
-  if (field.type === "ref" && !usesCompositeKey(entity, field)) {
-    const target = camel(field.to);
-    code += `.references((): AnyPgColumn => ${target}.id, { onDelete: "${field.onDelete}" })`;
-  }
-  return code;
-}
-
-const usesCompositeKey = (entity: Entity, field: Field) =>
-  field.type === "ref" && field.sameOwner && !field.optional && entity.scope !== "root";
-
-function drizzleTable(entity: Entity): string {
-  const fields = allFields(entity);
-  const name = table(entity);
-  const columns = Object.entries(fields).map(
-    ([key, field]) => `    ${key}: ${drizzleColumn(entity, key, field)},`,
-  );
-  const constraints: string[] = [];
-
-  if (entity.scope !== "root") {
-    constraints.push(`unique("${name}_id_owner_key").on(t.id, t.ownerId)`);
-  }
-  for (const [key, field] of Object.entries(fields)) {
-    if (field.type === "ref" && usesCompositeKey(entity, field)) {
-      const target = camel(field.to);
-      constraints.push(
-        `foreignKey({ name: "${name}_${snake(key)}_owner_fk", columns: [t.${key}, t.ownerId], foreignColumns: [${target}.id, ${target}.ownerId] }).onDelete("${field.onDelete}")`,
-      );
-    }
-  }
-  (entity.unique ?? []).forEach((columnsList) => {
-    const suffix = columnsList.map(snake).join("_");
-    const expanded = columnsList.flatMap((column) => {
-      const definition = entity.arcs?.[column];
-      return definition
-        ? definition.targets.map((target) => arcColumn(column, target))
-        : [column];
-    });
-    const nulls = expanded.some((column) => fields[column]?.optional) ? ".nullsNotDistinct()" : "";
-    constraints.push(
-      `unique("${name}_${suffix}_key").on(${expanded.map((column) => `t.${column}`).join(", ")})${nulls}`,
-    );
+function generateFirestore(): string {
+  const names = entities.map((entity) => `  ${entity.name}: "${table(entity)}",`);
+  const converters = entities.map((entity) => {
+    const fields = Object.entries(allFields(entity));
+    const timestamps = [
+      ...fields.filter(([, field]) => field.type === "timestamp").map(([key]) => key),
+      ...TIMESTAMP_FIELDS,
+    ];
+    const optional = fields.filter(([, field]) => field.optional).map(([key]) => key);
+    return `  ${entity.name}: converter(schemas.${entity.name}Schema, ${JSON.stringify(timestamps)}, ${JSON.stringify(optional)}),`;
   });
-  for (const [arcName, definition] of Object.entries(entity.arcs ?? {})) {
-    const args = definition.targets.map((target) => `\${t.${arcColumn(arcName, target)}}`).join(", ");
-    constraints.push(`check("${name}_${arcName}_one", sql\`num_nonnulls(${args}) = 1\`)`);
-  }
+  return `${HEADER}import * as schemas from "./schemas";
 
-  const extras = constraints.length
-    ? `,\n  (t) => [\n${constraints.map((item) => `    ${item},`).join("\n")}\n  ]`
-    : "";
-  return `export const ${camel(entity.name)} = pgTable(
-  "${name}",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-${columns.join("\n")}
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  }${extras},
-);`;
+/** Top-level Firestore collection of each entity. */
+export const collections = {
+${names.join("\n")}
+} as const;
+
+interface Snapshot {
+  id: string;
+  data(): Record<string, unknown>;
 }
 
-function generateDrizzle(): string {
-  const enums = new Map<string, string>();
-  for (const entity of entities) {
-    for (const [key, field] of Object.entries(allFields(entity))) {
-      if (field.type === "enum") {
-        enums.set(
-          enumConst(entity, key),
-          `export const ${enumConst(entity, key)} = pgEnum("${enumDbName(entity, key)}", ${JSON.stringify(field.values)});`,
-        );
-      }
-    }
-  }
-  return `${HEADER}import { sql } from "drizzle-orm";
-import {
-  bigint,
-  check,
-  doublePrecision,
-  foreignKey,
-  integer,
-  jsonb,
-  pgEnum,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-  type AnyPgColumn,
-} from "drizzle-orm/pg-core";
+const toDate = (value: unknown) =>
+  typeof (value as { toDate?: unknown } | null)?.toDate === "function"
+    ? (value as { toDate(): Date }).toDate()
+    : value;
 
-${[...enums.values()].join("\n")}
+/** Stores absent optional fields as null, and validates every document it reads. */
+function converter<T extends { id: string }>(
+  schema: { parse(value: unknown): T },
+  timestamps: readonly string[],
+  optional: readonly string[],
+) {
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    toFirestore(value: any): Record<string, unknown> {
+      const { id: _id, ...data } = value as Record<string, unknown>;
+      for (const key of optional) data[key] ??= null;
+      return data;
+    },
+    fromFirestore(snapshot: Snapshot): T {
+      const data: Record<string, unknown> = { ...snapshot.data(), id: snapshot.id };
+      for (const key of optional) data[key] ??= null;
+      for (const key of timestamps) data[key] = toDate(data[key]);
+      return schema.parse(data);
+    },
+  };
+}
 
-${sorted().map(drizzleTable).join("\n\n")}
+export const converters = {
+${converters.join("\n")}
+};
 `;
+}
+
+/** Firestore composite indexes, read by Terraform. */
+function generateIndexes(): string {
+  const indexes = entities.flatMap((entity) =>
+    (entity.indexes ?? []).map((fields) => ({
+      collection: table(entity),
+      fields: [
+        { field: "ownerId", order: "ASCENDING" },
+        ...fields.map(({ field, order }) => ({
+          field,
+          order: order === "asc" ? "ASCENDING" : "DESCENDING",
+        })),
+      ],
+    })),
+  );
+  return `${JSON.stringify({ indexes }, null, 2)}\n`;
 }
 
 function zodType(field: Field): string {
@@ -189,12 +112,14 @@ function zodType(field: Field): string {
       return "z.number().finite()";
     case "timestamp":
       return "z.coerce.date()";
+    case "date":
+      return "calendarDate";
     case "json":
       return "z.json()";
     case "enum":
       return `z.enum(${JSON.stringify(field.values)})`;
     case "ref":
-      return "z.uuid()";
+      return field.to === "User" ? "userId" : "z.uuid()";
   }
 }
 
@@ -224,7 +149,7 @@ function generateSchemas(): string {
       ? `export type ${name}Public = z.infer<typeof ${name}PublicSchema>;\n`
       : "";
     return `export const ${name}Schema = z.object({
-  id: z.uuid(),
+  id: ${entity.scope === "root" ? "userId" : "z.uuid()"},
 ${read.join("\n")}
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -245,6 +170,16 @@ const language = z.string().refine((value) => {
     return false;
   }
 }, "Expected a BCP 47 language tag");
+
+/** Identity Platform user IDs are opaque strings, not UUIDs. */
+const userId = z.string().min(1).max(128);
+
+/** A real calendar day as YYYY-MM-DD, with no time or timezone. */
+const calendarDate = z.string().refine((value) => {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const date = new Date(\`\${value}T00:00:00.000Z\`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}, "Expected a calendar date as YYYY-MM-DD");
 
 const exactlyOne = (value: Record<string, unknown>, keys: readonly string[]) =>
   keys.filter((key) => value[key] !== null && value[key] !== undefined).length === 1;
@@ -280,7 +215,7 @@ function generateDocs(): string {
       });
       const invariants = (entity.invariants ?? []).map((rule) => `- ${rule}`).join("\n");
       const arcs = Object.keys(entity.arcs ?? {}).map(
-        (name) => `- Exactly one \`${name}*Id\` column must be set.`,
+        (name) => `- Exactly one \`${name}*Id\` field must be set.`,
       );
       const rules = [...arcs, invariants].filter(Boolean).join("\n");
       return `### ${entity.name}\n\n${entity.description} Scope: ${entity.scope}.\n\n| Field | Type | Constraints | Description |\n| --- | --- | --- | --- |\n${rows.join("\n")}${rules ? `\n\n${rules}` : ""}`;
@@ -310,7 +245,8 @@ ${sections.join("\n\n")}
 }
 
 export const outputs = (): Record<string, string> => ({
-  "drizzle.ts": generateDrizzle(),
+  "firestore.ts": generateFirestore(),
+  "firestore.indexes.json": generateIndexes(),
   "schemas.ts": generateSchemas(),
   "data-model.md": generateDocs(),
 });

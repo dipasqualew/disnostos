@@ -1,10 +1,14 @@
+import { withAuth, type TokenVerifier } from "./auth";
+import type { DataLayer } from "./data/traces";
+import { handleData, isDataPath } from "./routes";
+
 export const DEFAULT_ALLOWED_ORIGINS = "http://localhost:5173";
 
-const ALLOWED_METHODS = "GET, OPTIONS";
-const ALLOWED_HEADERS = "Content-Type";
+const ALLOWED_METHODS = "GET, POST, PATCH, DELETE, OPTIONS";
+const ALLOWED_HEADERS = "Authorization, Content-Type";
 const PREFLIGHT_MAX_AGE_SECONDS = "600";
 
-export type RequestHandler = (request: Request) => Response;
+export type RequestHandler = (request: Request) => Promise<Response>;
 
 /** Parses the allowlist, dropping blanks and any `*` so a wildcard can never be echoed. */
 export function parseAllowedOrigins(
@@ -27,7 +31,11 @@ function corsHeaders(request: Request, allowedOrigins: ReadonlySet<string>): Hea
   return headers;
 }
 
-function route(request: Request): Response {
+function route(
+  request: Request,
+  verifyToken: TokenVerifier,
+  data: DataLayer | null,
+): Response | Promise<Response> {
   const { pathname } = new URL(request.url);
 
   if (request.method === "GET" && pathname === "/health") {
@@ -36,11 +44,21 @@ function route(request: Request): Response {
   if (request.method === "GET" && pathname === "/hello") {
     return Response.json({ message: "Hello from disnostos" });
   }
+  if (request.method === "GET" && pathname === "/me") {
+    return withAuth(verifyToken, (_request, user) => Response.json(user))(request);
+  }
+  if (isDataPath(pathname)) {
+    return withAuth(verifyToken, (authed, user) => handleData(authed, user, data))(request);
+  }
   return Response.json({ error: "Not Found" }, { status: 404 });
 }
 
-export function createHandler(allowedOrigins: ReadonlySet<string>): RequestHandler {
-  return (request) => {
+export function createHandler(
+  allowedOrigins: ReadonlySet<string>,
+  verifyToken: TokenVerifier,
+  data: DataLayer | null = null,
+): RequestHandler {
+  return async (request) => {
     const headers = corsHeaders(request, allowedOrigins);
 
     const isPreflight =
@@ -57,7 +75,7 @@ export function createHandler(allowedOrigins: ReadonlySet<string>): RequestHandl
       return new Response(null, { status: 204, headers });
     }
 
-    const response = route(request);
+    const response = await route(request, verifyToken, data);
     headers.forEach((value, name) => response.headers.set(name, value));
     return response;
   };

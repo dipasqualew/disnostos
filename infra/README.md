@@ -43,6 +43,25 @@ scripts/deploy.sh staging all   # or: api, web
 Images are built for `linux/amd64` and tagged with the git SHA. An uncommitted
 tree gets a `<sha>-dirty-<timestamp>` tag and a warning.
 
+## Authentication
+
+Identity Platform holds the users. Self-signup is disabled, so accounts exist only
+if an administrator creates them. After the first apply and web deploy, and for
+each new user, run as a project owner:
+
+```sh
+infra/configure-auth.sh staging user@example.com
+```
+
+It is safe to re-run. It enables email enumeration protection and creates the user
+with a random password that is never shown. The user then chooses a password
+through "Forgot your password?". CI has no access to user accounts.
+
+The script also tries to point reset emails at the app's `/auth/action` page.
+Google can refuse this with `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`. Reset emails then
+use Google's hosted reset page, which returns to the app afterwards. Re-run the
+script to switch to the in-app page once Google allows it.
+
 ## CI/CD
 
 `.github/workflows/ci.yml` runs tests, typecheck, build, and credential-free
@@ -57,6 +76,21 @@ ID can get credentials. No service account keys exist.
 CI cannot change IAM. Apply changes to `modules/github-ci`, and any change that
 adds an IAM binding, with `infra/tf.sh` as a project owner **before** merging;
 otherwise the CI apply fails with a 403.
+
+## Data
+
+Traces live in the `(default)` Firestore database (Native mode, delete-protected)
+and images in a private bucket with public access prevention. Only the API's
+runtime identity can reach either, and deny-all security rules block direct client
+access. Composite indexes come from
+`packages/model/generated/firestore.indexes.json`; run
+`bun run --cwd packages/model generate` after changing an entity, then apply.
+
+Point-in-time recovery and scheduled backups are off to stay within budget, so
+**deleted or overwritten data cannot be restored**.
+
+API tests that need Firestore are skipped unless `FIRESTORE_EMULATOR_HOST` is set;
+`apps/api/src/data/traces.test.ts` shows how to start the emulator.
 
 ## Budget alert
 

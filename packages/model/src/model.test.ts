@@ -3,6 +3,8 @@ import {
   DerivationCreateSchema,
   FigureCreateSchema,
   WordingPublicSchema,
+  TraceCreateSchema,
+  TraceLinkCreateSchema,
   WorkCreateSchema,
 } from "../generated/schemas";
 import * as schemas from "../generated/schemas";
@@ -63,6 +65,19 @@ describe("model", () => {
     expect(
       DerivationCreateSchema.safeParse({ ...base, toMythId: id, toBeatId: id }).success,
     ).toBe(false);
+  });
+
+  test("traces require a real calendar date", () => {
+    const trace = { body: "Today I walked by the sea." };
+    expect(TraceCreateSchema.safeParse({ ...trace, writtenOn: "2026-11-22" }).success).toBe(true);
+    expect(TraceCreateSchema.safeParse({ ...trace, writtenOn: "2024-02-29" }).success).toBe(true);
+    for (const writtenOn of [undefined, "2026-02-30", "2026-13-01", "22/11/2026", "2026-11-22T10:00:00Z"]) {
+      expect(TraceCreateSchema.safeParse({ ...trace, writtenOn }).success).toBe(false);
+    }
+  });
+
+  test("a trace link can target another trace", () => {
+    expect(TraceLinkCreateSchema.safeParse({ traceId: id, targetTraceId: id }).success).toBe(true);
   });
 
   test("work URLs must be http or https", () => {

@@ -80,6 +80,7 @@ erDiagram
   Trace ||--o{ TraceLink : traceId
   Beat |o--o{ TraceLink : targetBeatId
   Version |o--o{ TraceLink : targetVersionId
+  Trace |o--o{ TraceLink : targetTraceId
   Tag ||--o{ Tagging : tagId
   Asset |o--o{ Tagging : targetAssetId
   Work |o--o{ Tagging : targetWorkId
@@ -104,7 +105,7 @@ Metadata for one file in cloud storage. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `bucket` | text | required, owner-only | Storage bucket. |
 | `objectKey` | text | required, owner-only | Object path within the bucket. |
@@ -118,14 +119,14 @@ Places a Work alongside a beat, version, or trace. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `workId` | → Work | required, same owner | The attached work. |
 | `note` | text | optional | Why this work belongs here. |
 | `targetBeatId` | → Beat | optional, same owner | The object this work is attached to. |
 | `targetVersionId` | → Version | optional, same owner | The object this work is attached to. |
 | `targetTraceId` | → Trace | optional, same owner | The object this work is attached to. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
 
 ### Citation
 
@@ -133,7 +134,7 @@ Records a Work as the source of a beat, wording, or version. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `workId` | → Work | required, same owner | The cited work. |
 | `locator` | text | optional | Where in the work, such as 'lines 441-525'. |
 | `note` | text | optional | Why this source is cited. |
@@ -141,7 +142,7 @@ Records a Work as the source of a beat, wording, or version. Scope: dependent.
 | `targetWordingId` | → Wording | optional, same owner | The object this citation supports. |
 | `targetVersionId` | → Version | optional, same owner | The object this citation supports. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
 
 ### Share
 
@@ -149,7 +150,7 @@ Grants one user read access to a private object. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `granteeId` | → User | required | The invited reader. |
 | `targetMythologyId` | → Mythology | optional, same owner | The object being shared. |
 | `targetTraditionId` | → Tradition | optional, same owner | The object being shared. |
@@ -161,7 +162,7 @@ Grants one user read access to a private object. Scope: dependent.
 | `targetArchetypeId` | → Archetype | optional, same owner | The object being shared. |
 | `targetWorkId` | → Work | optional, same owner | The object being shared. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
 - The grantee cannot be the owner.
 - Shared objects remain private to everyone else.
 
@@ -180,7 +181,7 @@ A creative or scholarly work, such as a poem, painting, play, or paper. It can b
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `kind` | poem \| image \| song \| play \| book \| film \| study \| other | required | What sort of work this is. |
 | `title` | text | required | Title of the work. |
@@ -199,7 +200,7 @@ An atomic, language-independent story moment. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Beat | optional, owner-only | The object this was forked from. |
 | `mythId` | → Myth | required, same owner | The myth whose pool holds this beat. |
@@ -211,7 +212,7 @@ A typed link between myths, versions, beats, or figures, across any mythologies.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `kind` | retells \| echoes \| inverts \| borrows_from \| contradicts | required | How the source relates to the target. |
 | `note` | text | optional | Explains the connection. |
 | `fromMythId` | → Myth | optional, same owner | The owner's side of the link. |
@@ -223,8 +224,8 @@ A typed link between myths, versions, beats, or figures, across any mythologies.
 | `toBeatId` | → Beat | optional | The linked object, which may be another user's. |
 | `toFigureId` | → Figure | optional | The linked object, which may be another user's. |
 
-- Exactly one `from*Id` column must be set.
-- Exactly one `to*Id` column must be set.
+- Exactly one `from*Id` field must be set.
+- Exactly one `to*Id` field must be set.
 - A viewer sees a derivation only if they can see both ends.
 - A public object never reveals that a private object links to it.
 
@@ -234,7 +235,7 @@ The owner's reading of a version or a single beat. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Interpretation | optional, owner-only | The object this was forked from. |
 | `title` | text | optional | Title of the reading. |
@@ -244,7 +245,7 @@ The owner's reading of a version or a single beat. Scope: object.
 | `targetVersionId` | → Version | optional, same owner | What is being interpreted. |
 | `targetBeatId` | → Beat | optional, same owner | What is being interpreted. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
 
 ### Myth
 
@@ -252,7 +253,7 @@ A story and its pool of beats, such as Antigone. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Myth | optional, owner-only | The object this was forked from. |
 | `title` | text | required | Name of the story. |
@@ -264,7 +265,7 @@ A collection of traditions, such as Greek or a personal mythology. Scope: object
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `name` | text | required | Name of the mythology. |
 | `description` | text | optional | What this mythology covers. |
@@ -275,7 +276,7 @@ Places a tradition in a mythology. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `mythologyId` | → Mythology | required, same owner | The mythology. |
 | `traditionId` | → Tradition | required, same owner | The tradition. |
 
@@ -285,7 +286,7 @@ A collection of versions, such as Orphic or 'my 20s'. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `name` | text | required | Name of the tradition. |
 | `description` | text | optional | What unites these versions. |
@@ -296,7 +297,7 @@ Places a version in a tradition. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `traditionId` | → Tradition | required, same owner | The tradition. |
 | `versionId` | → Version | required, same owner | The version. |
 
@@ -306,7 +307,7 @@ One telling of a myth, such as Sophocles' Antigone. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Version | optional, owner-only | The object this was forked from. |
 | `mythId` | → Myth | required, same owner | The myth being told. |
@@ -321,7 +322,7 @@ Places a beat at a position in a version, with its chosen wording. Scope: depend
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `versionId` | → Version | required, same owner | The version. |
 | `beatId` | → Beat | required, same owner | The beat. |
 | `wordingId` | → Wording | optional, same owner | The wording this version uses. |
@@ -337,7 +338,7 @@ An append-only snapshot of a version and its beat order. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `versionId` | → Version | required, same owner | The revised version. |
 | `number` | int | required | Revision number, increasing per version. |
 | `snapshot` | json | required | The version's content and order at this revision. |
@@ -350,7 +351,7 @@ The text of a beat in one language. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Wording | optional, owner-only | The object this was forked from. |
 | `beatId` | → Beat | required, same owner | The beat this expresses. |
@@ -367,7 +368,7 @@ An append-only snapshot of a wording. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `wordingId` | → Wording | required, same owner | The revised wording. |
 | `number` | int | required | Revision number, increasing per wording. |
 | `snapshot` | json | required | The wording's content at this revision. |
@@ -382,7 +383,7 @@ A recurring abstract pattern, such as Seasonal Goddess or Descent. Scope: object
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Archetype | optional, owner-only | The object this was forked from. |
 | `kind` | role \| setting \| symbol \| trope | required | What sort of pattern this is. |
@@ -395,7 +396,7 @@ Records that a beat enacts an archetype, such as a Descent. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `beatId` | → Beat | required, same owner | The beat. |
 | `archetypeId` | → Archetype | required, same owner | The archetype. |
 | `note` | text | optional | How the beat enacts it. |
@@ -406,7 +407,7 @@ Records that a figure appears in a beat. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `beatId` | → Beat | required, same owner | The beat. |
 | `figureId` | → Figure | required, same owner | The figure. |
 | `note` | text | optional | The figure's part in this moment. |
@@ -417,7 +418,7 @@ A specific named thing in a story, such as Persephone, the Underworld, or the po
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `forkedFromId` | → Figure | optional, owner-only | The object this was forked from. |
 | `kind` | character \| place \| object | required | What sort of figure this is. |
@@ -430,7 +431,7 @@ Records that a figure embodies an archetype, either generally or within one trad
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `figureId` | → Figure | required, same owner | The figure. |
 | `archetypeId` | → Archetype | required, same owner | The archetype. |
 | `traditionId` | → Tradition | optional, same owner | The tradition this holds in. Empty means it holds generally. |
@@ -442,7 +443,7 @@ Another name or language form of a figure, such as Kore or Proserpina. Scope: de
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `figureId` | → Figure | required, same owner | The named figure. |
 | `language` | language | required | BCP 47 language tag. |
 | `name` | text | required | The name. |
@@ -455,7 +456,7 @@ An ordered collection of traces. Scope: object.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `name` | text | required | Name of the journal. |
 | `description` | text | optional | What this journal is for. |
@@ -466,7 +467,7 @@ Places a trace at a position in a journal. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `journalId` | → Journal | required, same owner | The journal. |
 | `traceId` | → Trace | required, same owner | The trace. |
 | `position` | float | required | Sort key. Moving a trace assigns the midpoint of its new neighbours. |
@@ -477,26 +478,29 @@ A piece of personal writing. Promotion copies it into a wording or interpretatio
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `visibility` | private \| public | required | Private by default; public is opt-in. |
 | `title` | text | optional | Optional title. |
 | `body` | text | required | The writing. |
 | `language` | language | optional | BCP 47 language tag. |
-| `writtenAt` | timestamp | optional | When the writer dates this entry. |
+| `writtenOn` | date | required | The calendar day the writer dates this entry, as YYYY-MM-DD. |
 
 ### TraceLink
 
-Attaches a trace to a beat or version without changing either. Scope: dependent.
+Connects a trace to a beat, version, or another trace without changing either. Scope: dependent.
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `traceId` | → Trace | required, same owner | The trace. |
 | `note` | text | optional | Why these connect. |
-| `targetBeatId` | → Beat | optional, same owner | What the trace attaches to. |
-| `targetVersionId` | → Version | optional, same owner | What the trace attaches to. |
+| `targetBeatId` | → Beat | optional, same owner | What the trace connects to. |
+| `targetVersionId` | → Version | optional, same owner | What the trace connects to. |
+| `targetTraceId` | → Trace | optional, same owner | What the trace connects to. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
+- A trace cannot link to itself.
+- A link between two traces is undirected: `traceId` holds the lower ID and `targetTraceId` the higher, so A-B and B-A are one link.
 
 ## Organisation
 
@@ -506,7 +510,7 @@ A private, freeform label for organising the owner's content. It carries no myth
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `name` | text | required | The label. |
 
 ### Tagging
@@ -515,7 +519,7 @@ Applies a tag to any object its owner can see, including another user's. Scope: 
 
 | Field | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `ownerId` | → User | required | The user who owns this row. |
+| `ownerId` | → User | required | The user who owns this document. |
 | `tagId` | → Tag | required, same owner | The tag. |
 | `targetAssetId` | → Asset | optional | The tagged object, which may be another user's. |
 | `targetWorkId` | → Work | optional | The tagged object, which may be another user's. |
@@ -531,7 +535,7 @@ Applies a tag to any object its owner can see, including another user's. Scope: 
 | `targetTraceId` | → Trace | optional | The tagged object, which may be another user's. |
 | `targetJournalId` | → Journal | optional | The tagged object, which may be another user's. |
 
-- Exactly one `target*Id` column must be set.
+- Exactly one `target*Id` field must be set.
 - The tagger must be able to see the target when tagging it.
 - If the target stops being visible to the tagger, the tagging is kept but hidden, and reveals nothing about the target.
 - A target's owner never learns that it was tagged, including through counts.

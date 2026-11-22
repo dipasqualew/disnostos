@@ -1,0 +1,20 @@
+{
+  "name": "@disnostos/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "bun stack/run.ts",
+    "check": "bun scripts/check-guidelines.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@disnostos/api": "workspace:*",
+    "@google-cloud/firestore": "9.4.1",
+    "@google-cloud/storage": "9.0.0",
+    "@playwright/test": "1.65.1",
+    "@types/bun": "1.3.13",
+    "firebase-tools": "15.37.0",
+    "typescript": "^5.9.3"
+  }
+}
