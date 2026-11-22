@@ -3,13 +3,13 @@
 # link, the APIs Terraform needs to start, and the Terraform state bucket.
 # Safe to re-run. Never changes gcloud config, org policy, or org-level IAM.
 #
-# Usage: infra/bootstrap.sh staging
+# Usage: infra/bootstrap.sh <staging|prod>
 set -euo pipefail
 
 ENVIRONMENT="${1:-}"
 case "$ENVIRONMENT" in
-  staging) ;;
-  *) echo "Usage: $0 staging" >&2; exit 2 ;;
+  staging|prod) ;;
+  *) echo "Usage: $0 <staging|prod>" >&2; exit 2 ;;
 esac
 
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"

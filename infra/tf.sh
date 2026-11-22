@@ -2,13 +2,13 @@
 # Runs Terraform for one environment, with quota billed to that environment's
 # project rather than whatever quota project the local ADC names.
 #
-# Usage: infra/tf.sh staging <terraform args...>
+# Usage: infra/tf.sh <staging|prod> <terraform args...>
 set -euo pipefail
 
 ENVIRONMENT="${1:-}"
 case "$ENVIRONMENT" in
-  staging) ;;
-  *) echo "Usage: $0 staging <terraform args...>" >&2; exit 2 ;;
+  staging|prod) ;;
+  *) echo "Usage: $0 <staging|prod> <terraform args...>" >&2; exit 2 ;;
 esac
 shift
 

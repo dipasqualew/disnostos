@@ -2,13 +2,13 @@
 # Runs Terraform for an environment's billing root. Owner-only and local: CI has
 # no billing permissions and must not manage budgets.
 #
-# Usage: infra/tf-billing.sh staging <terraform args...>
+# Usage: infra/tf-billing.sh <staging|prod> <terraform args...>
 set -euo pipefail
 
 ENVIRONMENT="${1:-}"
 case "$ENVIRONMENT" in
-  staging) ;;
-  *) echo "Usage: $0 staging <terraform args...>" >&2; exit 2 ;;
+  staging|prod) ;;
+  *) echo "Usage: $0 <staging|prod> <terraform args...>" >&2; exit 2 ;;
 esac
 shift
 

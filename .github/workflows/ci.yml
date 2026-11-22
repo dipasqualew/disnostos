@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [staging]
+        environment: [staging, prod]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -100,7 +100,7 @@ jobs:
             e2e/test-results/
           retention-days: 7
 
-  # To add production, copy this job with its own inputs and `needs: deploy-staging`.
+  # Production is deployed manually: see deploy-prod.yml.
   deploy-staging:
     name: Deploy staging
     needs: [app, terraform, e2e]

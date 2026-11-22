@@ -3,16 +3,16 @@
 # user with an unknown random password. The user sets their own through the
 # app's password reset. Safe to re-run; an existing user is left unchanged.
 #
-# Usage: infra/configure-auth.sh staging <email>
+# Usage: infra/configure-auth.sh <staging|prod> <email>
 set -euo pipefail
 
 ENVIRONMENT="${1:-}"
 EMAIL="${2:-}"
 case "$ENVIRONMENT" in
-  staging) ;;
-  *) echo "Usage: $0 staging <email>" >&2; exit 2 ;;
+  staging|prod) ;;
+  *) echo "Usage: $0 <staging|prod> <email>" >&2; exit 2 ;;
 esac
-[[ "$EMAIL" == *@*.* ]] || { echo "Usage: $0 staging <email>" >&2; exit 2; }
+[[ "$EMAIL" == *@*.* ]] || { echo "Usage: $0 <staging|prod> <email>" >&2; exit 2; }
 
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 load_environment "$ENVIRONMENT"

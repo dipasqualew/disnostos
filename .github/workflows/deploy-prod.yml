@@ -1,0 +1,39 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  # Staging deploys only after CI passes; a manual run must meet the same bar.
+  verify:
+    name: Require passing CI
+    if: github.ref == 'refs/heads/main' && github.repository == 'dipasqualew/disnostos'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Check CI passed for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          passed="$(gh run list --workflow ci.yml --commit "$SHA" --event push \
+            --status success --limit 1 --json databaseId --jq length)"
+          [[ "$passed" == "1" ]] || { echo "CI has not passed for $SHA" >&2; exit 1; }
+
+  deploy-prod:
+    name: Deploy prod
+    needs: [verify]
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy.yml
+    # Lets the called job read the secrets of its GitHub environment.
+    secrets: inherit
+    with:
+      environment: prod
+      terraform_version: 1.9.8 # Keep in step with TERRAFORM_VERSION in ci.yml.

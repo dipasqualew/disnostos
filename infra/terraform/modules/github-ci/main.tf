@@ -37,6 +37,17 @@ variable "github_ref" {
   default     = "refs/heads/main"
 }
 
+variable "github_event_name" {
+  description = "The only GitHub event allowed to obtain credentials."
+  type        = string
+  default     = "push"
+
+  validation {
+    condition     = contains(["push", "workflow_dispatch"], var.github_event_name)
+    error_message = "Must be push or workflow_dispatch."
+  }
+}
+
 variable "state_bucket" {
   description = "Terraform state bucket for this environment."
   type        = string
@@ -222,7 +233,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   attribute_condition = join(" && ", [
     "assertion.repository_id == \"${var.github_repository_id}\"",
     "assertion.ref == \"${var.github_ref}\"",
-    "assertion.event_name == \"push\"",
+    "assertion.event_name == \"${var.github_event_name}\"",
   ])
 
   attribute_mapping = {
