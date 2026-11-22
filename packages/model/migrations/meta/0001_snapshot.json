@@ -1,0 +1,4183 @@
+{
+  "id": "8debf56e-ace9-459c-aeb3-7192687df666",
+  "prevId": "a56cbc7b-6085-4057-9a9a-e308905b7002",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.archetype": {
+      "name": "archetype",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "archetype_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "archetype_owner_id_user_id_fk": {
+          "name": "archetype_owner_id_user_id_fk",
+          "tableFrom": "archetype",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "archetype_forked_from_id_archetype_id_fk": {
+          "name": "archetype_forked_from_id_archetype_id_fk",
+          "tableFrom": "archetype",
+          "tableTo": "archetype",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "archetype_id_owner_key": {
+          "name": "archetype_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.asset": {
+      "name": "asset",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "bucket": {
+          "name": "bucket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "byte_size": {
+          "name": "byte_size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checksum": {
+          "name": "checksum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "asset_owner_id_user_id_fk": {
+          "name": "asset_owner_id_user_id_fk",
+          "tableFrom": "asset",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "asset_id_owner_key": {
+          "name": "asset_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "asset_bucket_object_key_key": {
+          "name": "asset_bucket_object_key_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "bucket",
+            "object_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.attachment": {
+      "name": "attachment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "work_id": {
+          "name": "work_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_beat_id": {
+          "name": "target_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_trace_id": {
+          "name": "target_trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "attachment_owner_id_user_id_fk": {
+          "name": "attachment_owner_id_user_id_fk",
+          "tableFrom": "attachment",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attachment_target_beat_id_beat_id_fk": {
+          "name": "attachment_target_beat_id_beat_id_fk",
+          "tableFrom": "attachment",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "target_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attachment_target_version_id_version_id_fk": {
+          "name": "attachment_target_version_id_version_id_fk",
+          "tableFrom": "attachment",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attachment_target_trace_id_trace_id_fk": {
+          "name": "attachment_target_trace_id_trace_id_fk",
+          "tableFrom": "attachment",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "target_trace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attachment_work_id_owner_fk": {
+          "name": "attachment_work_id_owner_fk",
+          "tableFrom": "attachment",
+          "tableTo": "work",
+          "columnsFrom": [
+            "work_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "attachment_id_owner_key": {
+          "name": "attachment_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "attachment_target_one": {
+          "name": "attachment_target_one",
+          "value": "num_nonnulls(\"attachment\".\"target_beat_id\", \"attachment\".\"target_version_id\", \"attachment\".\"target_trace_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.beat": {
+      "name": "beat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "myth_id": {
+          "name": "myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "beat_owner_id_user_id_fk": {
+          "name": "beat_owner_id_user_id_fk",
+          "tableFrom": "beat",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beat_forked_from_id_beat_id_fk": {
+          "name": "beat_forked_from_id_beat_id_fk",
+          "tableFrom": "beat",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "beat_myth_id_owner_fk": {
+          "name": "beat_myth_id_owner_fk",
+          "tableFrom": "beat",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "myth_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "beat_id_owner_key": {
+          "name": "beat_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beat_archetype": {
+      "name": "beat_archetype",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beat_id": {
+          "name": "beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archetype_id": {
+          "name": "archetype_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "beat_archetype_owner_id_user_id_fk": {
+          "name": "beat_archetype_owner_id_user_id_fk",
+          "tableFrom": "beat_archetype",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beat_archetype_beat_id_owner_fk": {
+          "name": "beat_archetype_beat_id_owner_fk",
+          "tableFrom": "beat_archetype",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "beat_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beat_archetype_archetype_id_owner_fk": {
+          "name": "beat_archetype_archetype_id_owner_fk",
+          "tableFrom": "beat_archetype",
+          "tableTo": "archetype",
+          "columnsFrom": [
+            "archetype_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "beat_archetype_id_owner_key": {
+          "name": "beat_archetype_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "beat_archetype_beat_id_archetype_id_key": {
+          "name": "beat_archetype_beat_id_archetype_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "beat_id",
+            "archetype_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.beat_figure": {
+      "name": "beat_figure",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beat_id": {
+          "name": "beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "figure_id": {
+          "name": "figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "beat_figure_owner_id_user_id_fk": {
+          "name": "beat_figure_owner_id_user_id_fk",
+          "tableFrom": "beat_figure",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beat_figure_beat_id_owner_fk": {
+          "name": "beat_figure_beat_id_owner_fk",
+          "tableFrom": "beat_figure",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "beat_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "beat_figure_figure_id_owner_fk": {
+          "name": "beat_figure_figure_id_owner_fk",
+          "tableFrom": "beat_figure",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "figure_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "beat_figure_id_owner_key": {
+          "name": "beat_figure_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "beat_figure_beat_id_figure_id_key": {
+          "name": "beat_figure_beat_id_figure_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "beat_id",
+            "figure_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.citation": {
+      "name": "citation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "work_id": {
+          "name": "work_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locator": {
+          "name": "locator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_beat_id": {
+          "name": "target_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_wording_id": {
+          "name": "target_wording_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "citation_owner_id_user_id_fk": {
+          "name": "citation_owner_id_user_id_fk",
+          "tableFrom": "citation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "citation_target_beat_id_beat_id_fk": {
+          "name": "citation_target_beat_id_beat_id_fk",
+          "tableFrom": "citation",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "target_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "citation_target_wording_id_wording_id_fk": {
+          "name": "citation_target_wording_id_wording_id_fk",
+          "tableFrom": "citation",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "target_wording_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "citation_target_version_id_version_id_fk": {
+          "name": "citation_target_version_id_version_id_fk",
+          "tableFrom": "citation",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "citation_work_id_owner_fk": {
+          "name": "citation_work_id_owner_fk",
+          "tableFrom": "citation",
+          "tableTo": "work",
+          "columnsFrom": [
+            "work_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "citation_id_owner_key": {
+          "name": "citation_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "citation_target_one": {
+          "name": "citation_target_one",
+          "value": "num_nonnulls(\"citation\".\"target_beat_id\", \"citation\".\"target_wording_id\", \"citation\".\"target_version_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.derivation": {
+      "name": "derivation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "derivation_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_myth_id": {
+          "name": "from_myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_version_id": {
+          "name": "from_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_beat_id": {
+          "name": "from_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "from_figure_id": {
+          "name": "from_figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_myth_id": {
+          "name": "to_myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_version_id": {
+          "name": "to_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_beat_id": {
+          "name": "to_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_figure_id": {
+          "name": "to_figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "derivation_owner_id_user_id_fk": {
+          "name": "derivation_owner_id_user_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_from_myth_id_myth_id_fk": {
+          "name": "derivation_from_myth_id_myth_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "from_myth_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_from_version_id_version_id_fk": {
+          "name": "derivation_from_version_id_version_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "version",
+          "columnsFrom": [
+            "from_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_from_beat_id_beat_id_fk": {
+          "name": "derivation_from_beat_id_beat_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "from_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_from_figure_id_figure_id_fk": {
+          "name": "derivation_from_figure_id_figure_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "from_figure_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_to_myth_id_myth_id_fk": {
+          "name": "derivation_to_myth_id_myth_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "to_myth_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_to_version_id_version_id_fk": {
+          "name": "derivation_to_version_id_version_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "version",
+          "columnsFrom": [
+            "to_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_to_beat_id_beat_id_fk": {
+          "name": "derivation_to_beat_id_beat_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "to_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "derivation_to_figure_id_figure_id_fk": {
+          "name": "derivation_to_figure_id_figure_id_fk",
+          "tableFrom": "derivation",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "to_figure_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "derivation_id_owner_key": {
+          "name": "derivation_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "derivation_from_one": {
+          "name": "derivation_from_one",
+          "value": "num_nonnulls(\"derivation\".\"from_myth_id\", \"derivation\".\"from_version_id\", \"derivation\".\"from_beat_id\", \"derivation\".\"from_figure_id\") = 1"
+        },
+        "derivation_to_one": {
+          "name": "derivation_to_one",
+          "value": "num_nonnulls(\"derivation\".\"to_myth_id\", \"derivation\".\"to_version_id\", \"derivation\".\"to_beat_id\", \"derivation\".\"to_figure_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.figure": {
+      "name": "figure",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "figure_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "figure_owner_id_user_id_fk": {
+          "name": "figure_owner_id_user_id_fk",
+          "tableFrom": "figure",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "figure_forked_from_id_figure_id_fk": {
+          "name": "figure_forked_from_id_figure_id_fk",
+          "tableFrom": "figure",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "figure_id_owner_key": {
+          "name": "figure_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.figure_archetype": {
+      "name": "figure_archetype",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "figure_id": {
+          "name": "figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archetype_id": {
+          "name": "archetype_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tradition_id": {
+          "name": "tradition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "figure_archetype_owner_id_user_id_fk": {
+          "name": "figure_archetype_owner_id_user_id_fk",
+          "tableFrom": "figure_archetype",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "figure_archetype_tradition_id_tradition_id_fk": {
+          "name": "figure_archetype_tradition_id_tradition_id_fk",
+          "tableFrom": "figure_archetype",
+          "tableTo": "tradition",
+          "columnsFrom": [
+            "tradition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "figure_archetype_figure_id_owner_fk": {
+          "name": "figure_archetype_figure_id_owner_fk",
+          "tableFrom": "figure_archetype",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "figure_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "figure_archetype_archetype_id_owner_fk": {
+          "name": "figure_archetype_archetype_id_owner_fk",
+          "tableFrom": "figure_archetype",
+          "tableTo": "archetype",
+          "columnsFrom": [
+            "archetype_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "figure_archetype_id_owner_key": {
+          "name": "figure_archetype_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "figure_archetype_figure_id_archetype_id_tradition_id_key": {
+          "name": "figure_archetype_figure_id_archetype_id_tradition_id_key",
+          "nullsNotDistinct": true,
+          "columns": [
+            "figure_id",
+            "archetype_id",
+            "tradition_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.figure_name": {
+      "name": "figure_name",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "figure_id": {
+          "name": "figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "figure_name_owner_id_user_id_fk": {
+          "name": "figure_name_owner_id_user_id_fk",
+          "tableFrom": "figure_name",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "figure_name_figure_id_owner_fk": {
+          "name": "figure_name_figure_id_owner_fk",
+          "tableFrom": "figure_name",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "figure_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "figure_name_id_owner_key": {
+          "name": "figure_name_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "figure_name_figure_id_language_name_key": {
+          "name": "figure_name_figure_id_language_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "figure_id",
+            "language",
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.interpretation": {
+      "name": "interpretation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "promoted_from_trace_id": {
+          "name": "promoted_from_trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_beat_id": {
+          "name": "target_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "interpretation_owner_id_user_id_fk": {
+          "name": "interpretation_owner_id_user_id_fk",
+          "tableFrom": "interpretation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "interpretation_forked_from_id_interpretation_id_fk": {
+          "name": "interpretation_forked_from_id_interpretation_id_fk",
+          "tableFrom": "interpretation",
+          "tableTo": "interpretation",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "interpretation_promoted_from_trace_id_trace_id_fk": {
+          "name": "interpretation_promoted_from_trace_id_trace_id_fk",
+          "tableFrom": "interpretation",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "promoted_from_trace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "interpretation_target_version_id_version_id_fk": {
+          "name": "interpretation_target_version_id_version_id_fk",
+          "tableFrom": "interpretation",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "interpretation_target_beat_id_beat_id_fk": {
+          "name": "interpretation_target_beat_id_beat_id_fk",
+          "tableFrom": "interpretation",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "target_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "interpretation_id_owner_key": {
+          "name": "interpretation_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "interpretation_target_one": {
+          "name": "interpretation_target_one",
+          "value": "num_nonnulls(\"interpretation\".\"target_version_id\", \"interpretation\".\"target_beat_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.journal": {
+      "name": "journal",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "journal_owner_id_user_id_fk": {
+          "name": "journal_owner_id_user_id_fk",
+          "tableFrom": "journal",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "journal_id_owner_key": {
+          "name": "journal_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.journal_trace": {
+      "name": "journal_trace",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "journal_id": {
+          "name": "journal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trace_id": {
+          "name": "trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "journal_trace_owner_id_user_id_fk": {
+          "name": "journal_trace_owner_id_user_id_fk",
+          "tableFrom": "journal_trace",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "journal_trace_journal_id_owner_fk": {
+          "name": "journal_trace_journal_id_owner_fk",
+          "tableFrom": "journal_trace",
+          "tableTo": "journal",
+          "columnsFrom": [
+            "journal_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "journal_trace_trace_id_owner_fk": {
+          "name": "journal_trace_trace_id_owner_fk",
+          "tableFrom": "journal_trace",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "trace_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "journal_trace_id_owner_key": {
+          "name": "journal_trace_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "journal_trace_journal_id_trace_id_key": {
+          "name": "journal_trace_journal_id_trace_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "journal_id",
+            "trace_id"
+          ]
+        },
+        "journal_trace_journal_id_position_key": {
+          "name": "journal_trace_journal_id_position_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "journal_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.myth": {
+      "name": "myth",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "myth_owner_id_user_id_fk": {
+          "name": "myth_owner_id_user_id_fk",
+          "tableFrom": "myth",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "myth_forked_from_id_myth_id_fk": {
+          "name": "myth_forked_from_id_myth_id_fk",
+          "tableFrom": "myth",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "myth_id_owner_key": {
+          "name": "myth_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mythology": {
+      "name": "mythology",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mythology_owner_id_user_id_fk": {
+          "name": "mythology_owner_id_user_id_fk",
+          "tableFrom": "mythology",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "mythology_id_owner_key": {
+          "name": "mythology_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mythology_tradition": {
+      "name": "mythology_tradition",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mythology_id": {
+          "name": "mythology_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tradition_id": {
+          "name": "tradition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "mythology_tradition_owner_id_user_id_fk": {
+          "name": "mythology_tradition_owner_id_user_id_fk",
+          "tableFrom": "mythology_tradition",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "mythology_tradition_mythology_id_owner_fk": {
+          "name": "mythology_tradition_mythology_id_owner_fk",
+          "tableFrom": "mythology_tradition",
+          "tableTo": "mythology",
+          "columnsFrom": [
+            "mythology_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "mythology_tradition_tradition_id_owner_fk": {
+          "name": "mythology_tradition_tradition_id_owner_fk",
+          "tableFrom": "mythology_tradition",
+          "tableTo": "tradition",
+          "columnsFrom": [
+            "tradition_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "mythology_tradition_id_owner_key": {
+          "name": "mythology_tradition_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "mythology_tradition_mythology_id_tradition_id_key": {
+          "name": "mythology_tradition_mythology_id_tradition_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "mythology_id",
+            "tradition_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.share": {
+      "name": "share",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grantee_id": {
+          "name": "grantee_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_mythology_id": {
+          "name": "target_mythology_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_tradition_id": {
+          "name": "target_tradition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_myth_id": {
+          "name": "target_myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_journal_id": {
+          "name": "target_journal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_trace_id": {
+          "name": "target_trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_figure_id": {
+          "name": "target_figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_archetype_id": {
+          "name": "target_archetype_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_work_id": {
+          "name": "target_work_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "share_owner_id_user_id_fk": {
+          "name": "share_owner_id_user_id_fk",
+          "tableFrom": "share",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_grantee_id_user_id_fk": {
+          "name": "share_grantee_id_user_id_fk",
+          "tableFrom": "share",
+          "tableTo": "user",
+          "columnsFrom": [
+            "grantee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_mythology_id_mythology_id_fk": {
+          "name": "share_target_mythology_id_mythology_id_fk",
+          "tableFrom": "share",
+          "tableTo": "mythology",
+          "columnsFrom": [
+            "target_mythology_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_tradition_id_tradition_id_fk": {
+          "name": "share_target_tradition_id_tradition_id_fk",
+          "tableFrom": "share",
+          "tableTo": "tradition",
+          "columnsFrom": [
+            "target_tradition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_version_id_version_id_fk": {
+          "name": "share_target_version_id_version_id_fk",
+          "tableFrom": "share",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_myth_id_myth_id_fk": {
+          "name": "share_target_myth_id_myth_id_fk",
+          "tableFrom": "share",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "target_myth_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_journal_id_journal_id_fk": {
+          "name": "share_target_journal_id_journal_id_fk",
+          "tableFrom": "share",
+          "tableTo": "journal",
+          "columnsFrom": [
+            "target_journal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_trace_id_trace_id_fk": {
+          "name": "share_target_trace_id_trace_id_fk",
+          "tableFrom": "share",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "target_trace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_figure_id_figure_id_fk": {
+          "name": "share_target_figure_id_figure_id_fk",
+          "tableFrom": "share",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "target_figure_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_archetype_id_archetype_id_fk": {
+          "name": "share_target_archetype_id_archetype_id_fk",
+          "tableFrom": "share",
+          "tableTo": "archetype",
+          "columnsFrom": [
+            "target_archetype_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "share_target_work_id_work_id_fk": {
+          "name": "share_target_work_id_work_id_fk",
+          "tableFrom": "share",
+          "tableTo": "work",
+          "columnsFrom": [
+            "target_work_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "share_id_owner_key": {
+          "name": "share_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "share_target_one": {
+          "name": "share_target_one",
+          "value": "num_nonnulls(\"share\".\"target_mythology_id\", \"share\".\"target_tradition_id\", \"share\".\"target_version_id\", \"share\".\"target_myth_id\", \"share\".\"target_journal_id\", \"share\".\"target_trace_id\", \"share\".\"target_figure_id\", \"share\".\"target_archetype_id\", \"share\".\"target_work_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tag": {
+      "name": "tag",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tag_owner_id_user_id_fk": {
+          "name": "tag_owner_id_user_id_fk",
+          "tableFrom": "tag",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tag_id_owner_key": {
+          "name": "tag_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "tag_owner_id_name_key": {
+          "name": "tag_owner_id_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "owner_id",
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tagging": {
+      "name": "tagging",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_asset_id": {
+          "name": "target_asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_work_id": {
+          "name": "target_work_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_myth_id": {
+          "name": "target_myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_beat_id": {
+          "name": "target_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_wording_id": {
+          "name": "target_wording_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_interpretation_id": {
+          "name": "target_interpretation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_tradition_id": {
+          "name": "target_tradition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_mythology_id": {
+          "name": "target_mythology_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_figure_id": {
+          "name": "target_figure_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_archetype_id": {
+          "name": "target_archetype_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_trace_id": {
+          "name": "target_trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_journal_id": {
+          "name": "target_journal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tagging_owner_id_user_id_fk": {
+          "name": "tagging_owner_id_user_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_asset_id_asset_id_fk": {
+          "name": "tagging_target_asset_id_asset_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "asset",
+          "columnsFrom": [
+            "target_asset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_work_id_work_id_fk": {
+          "name": "tagging_target_work_id_work_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "work",
+          "columnsFrom": [
+            "target_work_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_myth_id_myth_id_fk": {
+          "name": "tagging_target_myth_id_myth_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "target_myth_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_beat_id_beat_id_fk": {
+          "name": "tagging_target_beat_id_beat_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "target_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_wording_id_wording_id_fk": {
+          "name": "tagging_target_wording_id_wording_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "target_wording_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_version_id_version_id_fk": {
+          "name": "tagging_target_version_id_version_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_interpretation_id_interpretation_id_fk": {
+          "name": "tagging_target_interpretation_id_interpretation_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "interpretation",
+          "columnsFrom": [
+            "target_interpretation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_tradition_id_tradition_id_fk": {
+          "name": "tagging_target_tradition_id_tradition_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "tradition",
+          "columnsFrom": [
+            "target_tradition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_mythology_id_mythology_id_fk": {
+          "name": "tagging_target_mythology_id_mythology_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "mythology",
+          "columnsFrom": [
+            "target_mythology_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_figure_id_figure_id_fk": {
+          "name": "tagging_target_figure_id_figure_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "figure",
+          "columnsFrom": [
+            "target_figure_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_archetype_id_archetype_id_fk": {
+          "name": "tagging_target_archetype_id_archetype_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "archetype",
+          "columnsFrom": [
+            "target_archetype_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_trace_id_trace_id_fk": {
+          "name": "tagging_target_trace_id_trace_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "target_trace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_target_journal_id_journal_id_fk": {
+          "name": "tagging_target_journal_id_journal_id_fk",
+          "tableFrom": "tagging",
+          "tableTo": "journal",
+          "columnsFrom": [
+            "target_journal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tagging_tag_id_owner_fk": {
+          "name": "tagging_tag_id_owner_fk",
+          "tableFrom": "tagging",
+          "tableTo": "tag",
+          "columnsFrom": [
+            "tag_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tagging_id_owner_key": {
+          "name": "tagging_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "tagging_tag_id_target_key": {
+          "name": "tagging_tag_id_target_key",
+          "nullsNotDistinct": true,
+          "columns": [
+            "tag_id",
+            "target_asset_id",
+            "target_work_id",
+            "target_myth_id",
+            "target_beat_id",
+            "target_wording_id",
+            "target_version_id",
+            "target_interpretation_id",
+            "target_tradition_id",
+            "target_mythology_id",
+            "target_figure_id",
+            "target_archetype_id",
+            "target_trace_id",
+            "target_journal_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tagging_target_one": {
+          "name": "tagging_target_one",
+          "value": "num_nonnulls(\"tagging\".\"target_asset_id\", \"tagging\".\"target_work_id\", \"tagging\".\"target_myth_id\", \"tagging\".\"target_beat_id\", \"tagging\".\"target_wording_id\", \"tagging\".\"target_version_id\", \"tagging\".\"target_interpretation_id\", \"tagging\".\"target_tradition_id\", \"tagging\".\"target_mythology_id\", \"tagging\".\"target_figure_id\", \"tagging\".\"target_archetype_id\", \"tagging\".\"target_trace_id\", \"tagging\".\"target_journal_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.trace": {
+      "name": "trace",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "written_at": {
+          "name": "written_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "trace_owner_id_user_id_fk": {
+          "name": "trace_owner_id_user_id_fk",
+          "tableFrom": "trace",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "trace_id_owner_key": {
+          "name": "trace_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.trace_link": {
+      "name": "trace_link",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trace_id": {
+          "name": "trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_beat_id": {
+          "name": "target_beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "trace_link_owner_id_user_id_fk": {
+          "name": "trace_link_owner_id_user_id_fk",
+          "tableFrom": "trace_link",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "trace_link_target_beat_id_beat_id_fk": {
+          "name": "trace_link_target_beat_id_beat_id_fk",
+          "tableFrom": "trace_link",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "target_beat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "trace_link_target_version_id_version_id_fk": {
+          "name": "trace_link_target_version_id_version_id_fk",
+          "tableFrom": "trace_link",
+          "tableTo": "version",
+          "columnsFrom": [
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "trace_link_trace_id_owner_fk": {
+          "name": "trace_link_trace_id_owner_fk",
+          "tableFrom": "trace_link",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "trace_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "trace_link_id_owner_key": {
+          "name": "trace_link_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "trace_link_target_one": {
+          "name": "trace_link_target_one",
+          "value": "num_nonnulls(\"trace_link\".\"target_beat_id\", \"trace_link\".\"target_version_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tradition": {
+      "name": "tradition",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tradition_owner_id_user_id_fk": {
+          "name": "tradition_owner_id_user_id_fk",
+          "tableFrom": "tradition",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tradition_id_owner_key": {
+          "name": "tradition_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tradition_version": {
+      "name": "tradition_version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tradition_id": {
+          "name": "tradition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tradition_version_owner_id_user_id_fk": {
+          "name": "tradition_version_owner_id_user_id_fk",
+          "tableFrom": "tradition_version",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tradition_version_tradition_id_owner_fk": {
+          "name": "tradition_version_tradition_id_owner_fk",
+          "tableFrom": "tradition_version",
+          "tableTo": "tradition",
+          "columnsFrom": [
+            "tradition_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tradition_version_version_id_owner_fk": {
+          "name": "tradition_version_version_id_owner_fk",
+          "tableFrom": "tradition_version",
+          "tableTo": "version",
+          "columnsFrom": [
+            "version_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tradition_version_id_owner_key": {
+          "name": "tradition_version_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "tradition_version_tradition_id_version_id_key": {
+          "name": "tradition_version_tradition_id_version_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tradition_id",
+            "version_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.version": {
+      "name": "version",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "myth_id": {
+          "name": "myth_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "version_owner_id_user_id_fk": {
+          "name": "version_owner_id_user_id_fk",
+          "tableFrom": "version",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "version_forked_from_id_version_id_fk": {
+          "name": "version_forked_from_id_version_id_fk",
+          "tableFrom": "version",
+          "tableTo": "version",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "version_myth_id_owner_fk": {
+          "name": "version_myth_id_owner_fk",
+          "tableFrom": "version",
+          "tableTo": "myth",
+          "columnsFrom": [
+            "myth_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "version_id_owner_key": {
+          "name": "version_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.version_beat": {
+      "name": "version_beat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beat_id": {
+          "name": "beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wording_id": {
+          "name": "wording_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "version_beat_owner_id_user_id_fk": {
+          "name": "version_beat_owner_id_user_id_fk",
+          "tableFrom": "version_beat",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "version_beat_wording_id_wording_id_fk": {
+          "name": "version_beat_wording_id_wording_id_fk",
+          "tableFrom": "version_beat",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "wording_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "version_beat_version_id_owner_fk": {
+          "name": "version_beat_version_id_owner_fk",
+          "tableFrom": "version_beat",
+          "tableTo": "version",
+          "columnsFrom": [
+            "version_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "version_beat_beat_id_owner_fk": {
+          "name": "version_beat_beat_id_owner_fk",
+          "tableFrom": "version_beat",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "beat_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "version_beat_id_owner_key": {
+          "name": "version_beat_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "version_beat_version_id_position_key": {
+          "name": "version_beat_version_id_position_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "version_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.version_revision": {
+      "name": "version_revision",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "version_revision_owner_id_user_id_fk": {
+          "name": "version_revision_owner_id_user_id_fk",
+          "tableFrom": "version_revision",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "version_revision_version_id_owner_fk": {
+          "name": "version_revision_version_id_owner_fk",
+          "tableFrom": "version_revision",
+          "tableTo": "version",
+          "columnsFrom": [
+            "version_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "version_revision_id_owner_key": {
+          "name": "version_revision_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "version_revision_version_id_number_key": {
+          "name": "version_revision_version_id_number_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "version_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wording": {
+      "name": "wording",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "forked_from_id": {
+          "name": "forked_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "beat_id": {
+          "name": "beat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "translated_from_id": {
+          "name": "translated_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "promoted_from_trace_id": {
+          "name": "promoted_from_trace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wording_owner_id_user_id_fk": {
+          "name": "wording_owner_id_user_id_fk",
+          "tableFrom": "wording",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "wording_forked_from_id_wording_id_fk": {
+          "name": "wording_forked_from_id_wording_id_fk",
+          "tableFrom": "wording",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "forked_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "wording_translated_from_id_wording_id_fk": {
+          "name": "wording_translated_from_id_wording_id_fk",
+          "tableFrom": "wording",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "translated_from_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "wording_promoted_from_trace_id_trace_id_fk": {
+          "name": "wording_promoted_from_trace_id_trace_id_fk",
+          "tableFrom": "wording",
+          "tableTo": "trace",
+          "columnsFrom": [
+            "promoted_from_trace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "wording_beat_id_owner_fk": {
+          "name": "wording_beat_id_owner_fk",
+          "tableFrom": "wording",
+          "tableTo": "beat",
+          "columnsFrom": [
+            "beat_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wording_id_owner_key": {
+          "name": "wording_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.wording_revision": {
+      "name": "wording_revision",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wording_id": {
+          "name": "wording_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wording_revision_owner_id_user_id_fk": {
+          "name": "wording_revision_owner_id_user_id_fk",
+          "tableFrom": "wording_revision",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "wording_revision_wording_id_owner_fk": {
+          "name": "wording_revision_wording_id_owner_fk",
+          "tableFrom": "wording_revision",
+          "tableTo": "wording",
+          "columnsFrom": [
+            "wording_id",
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id",
+            "owner_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wording_revision_id_owner_key": {
+          "name": "wording_revision_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        },
+        "wording_revision_wording_id_number_key": {
+          "name": "wording_revision_wording_id_number_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wording_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.work": {
+      "name": "work",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "kind": {
+          "name": "kind",
+          "type": "work_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creator": {
+          "name": "creator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_label": {
+          "name": "date_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provenance": {
+          "name": "provenance",
+          "type": "work_provenance",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rights": {
+          "name": "rights",
+          "type": "work_rights",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "work_owner_id_user_id_fk": {
+          "name": "work_owner_id_user_id_fk",
+          "tableFrom": "work",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "work_asset_id_asset_id_fk": {
+          "name": "work_asset_id_asset_id_fk",
+          "tableFrom": "work",
+          "tableTo": "asset",
+          "columnsFrom": [
+            "asset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "work_id_owner_key": {
+          "name": "work_id_owner_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "owner_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.archetype_kind": {
+      "name": "archetype_kind",
+      "schema": "public",
+      "values": [
+        "role",
+        "setting",
+        "symbol",
+        "trope"
+      ]
+    },
+    "public.derivation_kind": {
+      "name": "derivation_kind",
+      "schema": "public",
+      "values": [
+        "retells",
+        "echoes",
+        "inverts",
+        "borrows_from",
+        "contradicts"
+      ]
+    },
+    "public.figure_kind": {
+      "name": "figure_kind",
+      "schema": "public",
+      "values": [
+        "character",
+        "place",
+        "object"
+      ]
+    },
+    "public.visibility": {
+      "name": "visibility",
+      "schema": "public",
+      "values": [
+        "private",
+        "public"
+      ]
+    },
+    "public.work_kind": {
+      "name": "work_kind",
+      "schema": "public",
+      "values": [
+        "poem",
+        "image",
+        "song",
+        "play",
+        "book",
+        "film",
+        "study",
+        "other"
+      ]
+    },
+    "public.work_provenance": {
+      "name": "work_provenance",
+      "schema": "public",
+      "values": [
+        "ancient",
+        "modern",
+        "personal"
+      ]
+    },
+    "public.work_rights": {
+      "name": "work_rights",
+      "schema": "public",
+      "values": [
+        "public_domain",
+        "licensed",
+        "in_copyright",
+        "own_work",
+        "unknown"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
