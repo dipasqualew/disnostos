@@ -58,6 +58,23 @@ CI cannot change IAM. Apply changes to `modules/github-ci`, and any change that
 adds an IAM binding, with `infra/tf.sh` as a project owner **before** merging;
 otherwise the CI apply fails with a 403.
 
+## Budget alert
+
+`infra/terraform/environments/staging-billing` holds a 10 GBP calendar-month
+budget for the staging project only. It emails the default billing recipients at
+50%, 90%, and 100% of actual spend and 100% of forecasted spend. **A budget
+alerts but does not cap spending.**
+
+CI has no billing access and does not manage this root. Apply it locally as a
+user with billing permissions; it reads `GCP_BILLING_ACCOUNT_ID` from
+`infra/.env.staging`. The budget currency must match the billing account (GBP):
+
+```sh
+infra/tf-billing.sh staging init
+infra/tf-billing.sh staging plan -out=billing.tfplan
+infra/tf-billing.sh staging apply billing.tfplan
+```
+
 ## Adding an environment
 
 Add `infra/terraform/environments/<env>` using the shared modules, then add the
