@@ -39,6 +39,8 @@ export class ApiError extends Error {
     readonly status: number,
     message: string,
     readonly details: ErrorDetail[] = [],
+    /** The response's `details` as sent, for errors whose details are not a field list. */
+    readonly rawDetails: unknown = undefined,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -76,12 +78,14 @@ type Auth = Pick<AuthClient, 'getIdToken' | 'signOut'>;
 async function toApiError(response: Response): Promise<ApiError> {
   const body = (await response.json().catch(() => null)) as {
     error?: string;
-    details?: ErrorDetail[];
+    details?: unknown;
   } | null;
-  return new ApiError(response.status, body?.error ?? response.statusText, body?.details ?? []);
+  const details = Array.isArray(body?.details) ? (body.details as ErrorDetail[]) : [];
+  return new ApiError(response.status, body?.error ?? response.statusText, details, body?.details);
 }
 
-export function createTracesApi(auth: Auth) {
+/** Authenticated requests: refreshes an expired token once and normalises failures. */
+export function createRequester(auth: Auth) {
   async function send(path: string, init: RequestInit = {}): Promise<Response> {
     try {
       let response = await apiFetch(path, () => auth.getIdToken(), init);
@@ -110,6 +114,12 @@ export function createTracesApi(auth: Auth) {
     body: JSON.stringify(body),
     signal,
   });
+
+  return { send, json, withJson };
+}
+
+export function createTracesApi(auth: Auth) {
+  const { send, json, withJson } = createRequester(auth);
 
   return {
     list(query: ListQuery = {}, signal?: AbortSignal) {

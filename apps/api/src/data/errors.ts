@@ -10,6 +10,7 @@ export class DataError extends Error {
 }
 
 export const notFound = () => new DataError(404, "Not Found");
-export const conflict = (message: string) => new DataError(409, message);
+export const conflict = (message: string, details?: unknown) =>
+  new DataError(409, message, details);
 export const invalid = (message: string, details?: unknown) =>
   new DataError(400, message, details);

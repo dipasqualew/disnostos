@@ -16,7 +16,8 @@ type Toast = { id: number; message: string; action?: { label: string; run(): voi
 type PendingDelete = { timer: ReturnType<typeof setTimeout>; toastId: number };
 
 type Toasts = {
-  notify(message: string): void;
+  /** Shows a message, with an optional action such as Undo that stays for the undo window. */
+  notify(message: string, action?: { label: string; run(): void }): void;
   /** Hides a trace now and deletes it when the undo window ends. */
   deleteTrace(id: string): void;
   /** Sends every waiting delete now, for when the session is about to end. */
@@ -119,14 +120,30 @@ export function ToastProvider({ api, children }: { api: TracesApi; children: Rea
 
   const value = useMemo(
     () => ({
-      notify: (message: string) => void push(message),
+      notify: (message: string, action?: { label: string; run(): void }) => {
+        if (!action) {
+          push(message);
+          return;
+        }
+        const toastId = push(
+          message,
+          {
+            label: action.label,
+            run: () => {
+              dismiss(toastId);
+              action.run();
+            },
+          },
+          UNDO_MS,
+        );
+      },
       deleteTrace,
       flushDeletes,
       deleting,
       trackSave,
       savesSettled,
     }),
-    [push, deleteTrace, flushDeletes, deleting, trackSave, savesSettled],
+    [dismiss, push, deleteTrace, flushDeletes, deleting, trackSave, savesSettled],
   );
 
   return (

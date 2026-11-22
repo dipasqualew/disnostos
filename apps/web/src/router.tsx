@@ -15,7 +15,7 @@ import { ConfirmDialog } from './traces/ui';
 export const AUTH_ACTION_PATH = '/auth/action';
 
 type Location = { path: string; search: string };
-type NavigateOptions = { replace?: boolean; force?: boolean };
+type NavigateOptions = { replace?: boolean; force?: boolean; keepScroll?: boolean };
 
 type Router = Location & {
   navigate(to: string, options?: NavigateOptions): void;
@@ -43,18 +43,18 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const discard = useRef<(() => void) | null>(null);
   const held = useRef<(() => void) | null>(null);
 
-  const sync = useCallback(() => {
+  const sync = useCallback((keepScroll = false) => {
     const next = readLocation();
     current.current = toUrl(next);
     setLocation(next);
-    document.documentElement.scrollTop = 0;
+    if (!keepScroll) document.documentElement.scrollTop = 0;
   }, []);
 
   const commit = useCallback(
-    (to: string, replace = false) => {
+    (to: string, replace = false, keepScroll = false) => {
       if (replace) window.history.replaceState(null, '', to);
       else window.history.pushState(null, '', to);
-      sync();
+      sync(keepScroll);
     },
     [sync],
   );
@@ -67,7 +67,7 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback(
     (to: string, options: NavigateOptions = {}) => {
       if (options.force) discard.current = null;
-      guard(() => commit(to, options.replace));
+      guard(() => commit(to, options.replace, options.keepScroll));
     },
     [commit, guard],
   );
@@ -151,10 +151,10 @@ export function useUnsavedGuard(dirty: boolean, onDiscard: () => void) {
   }, [dirty, setUnsaved]);
 }
 
-type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & { to: string };
+type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; keepScroll?: boolean };
 
 /** A real anchor, so that opening in a new tab and keyboard use keep working. */
-export function Link({ to, onClick, children, ...rest }: LinkProps) {
+export function Link({ to, keepScroll, onClick, children, ...rest }: LinkProps) {
   const { navigate } = useRouter();
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -170,7 +170,7 @@ export function Link({ to, onClick, children, ...rest }: LinkProps) {
       return;
     }
     event.preventDefault();
-    navigate(to);
+    navigate(to, { keepScroll });
   }
 
   return (
