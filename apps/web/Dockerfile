@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package.json bun.lock tsconfig.base.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+COPY packages/model/package.json packages/model/
 RUN bun install --frozen-lockfile
 COPY apps/web apps/web
 RUN VITE_API_URL="$VITE_API_URL" bun run --cwd apps/web build
