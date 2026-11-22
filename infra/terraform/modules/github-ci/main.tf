@@ -110,6 +110,7 @@ resource "google_project_iam_custom_role" "deployer" {
     "iam.roles.get",
     "iam.workloadIdentityPoolProviders.get",
     "iam.workloadIdentityPools.get",
+    "iam.workloadIdentityPools.getAttestationRules",
 
     # Image repository settings.
     "artifactregistry.repositories.create",
