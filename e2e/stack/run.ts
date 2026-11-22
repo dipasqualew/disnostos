@@ -62,6 +62,8 @@ async function ready(name: string, url: string) {
     if (up) return;
     await Bun.sleep(STARTUP_INTERVAL_MS);
   }
+  const log = Bun.file(join(STACK, `${name}.log`));
+  if (await log.exists()) console.error(await log.text());
   throw new Error(`${name} did not start. See e2e/.stack/${name}.log`);
 }
 

@@ -3,6 +3,7 @@
 // are unsigned, so they are checked by asking the Auth emulator.
 import { Firestore } from "@google-cloud/firestore";
 import { Storage } from "@google-cloud/storage";
+import { PassThroughClient } from "google-auth-library";
 import type { TokenVerifier } from "../../apps/api/src/auth";
 import { gcsBlobStore } from "../../apps/api/src/data/blobs";
 import { MAX_IMAGE_BYTES } from "../../apps/api/src/data/images";
@@ -22,7 +23,12 @@ const verifyToken: TokenVerifier = async (idToken) => {
   return { uid: user.localId, email: user.email ?? null };
 };
 
-const storage = new Storage({ projectId: PROJECT_ID, apiEndpoint: STORAGE_EMULATOR_URL });
+// The fake GCS server needs no credentials, and the stack must never look for real ones.
+const storage = new Storage({
+  projectId: PROJECT_ID,
+  apiEndpoint: STORAGE_EMULATOR_URL,
+  authClient: new PassThroughClient(),
+});
 await storage.createBucket(IMAGES_BUCKET);
 
 const { hostname, port } = new URL(API_URL);
@@ -34,7 +40,7 @@ Bun.serve({
     new Set([WEB_URL]),
     verifyToken,
     createDataLayer(
-      new Firestore({ projectId: PROJECT_ID, preferRest: true }),
+      new Firestore({ projectId: PROJECT_ID, preferRest: true, authClient: new PassThroughClient() }),
       gcsBlobStore(storage, IMAGES_BUCKET),
     ),
   ),
