@@ -1,0 +1,4 @@
+.stack/
+playwright-report/
+test-results/
+*.log

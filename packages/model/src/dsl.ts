@@ -39,6 +39,7 @@ export type ScalarType =
   | "bigint"
   | "float"
   | "timestamp"
+  | "date"
   | "json";
 
 export type OnDelete = "cascade" | "restrict" | "set null";
@@ -64,7 +65,7 @@ export interface RefField extends FieldBase {
   type: "ref";
   to: EntityName;
   onDelete: OnDelete;
-  /** Required refs enforce this in Postgres; optional refs in the API data layer. */
+  /** Enforced by the API data layer inside a Firestore transaction. */
   sameOwner: boolean;
 }
 
@@ -94,10 +95,17 @@ export interface Entity {
   fields: Record<string, Field>;
   /** Exactly one target must be set. Expands to `<arc><Target>Id` columns. */
   arcs?: Record<string, Arc>;
-  /** Column or arc names. Nulls compare equal when any expanded column is optional. */
+  /** Field or arc names. Enforced by the API data layer, as Firestore has no unique constraints. */
   unique?: readonly (readonly string[])[];
-  /** Rules the database cannot enforce, which the API data layer must. */
+  /** Rules the API data layer must enforce. */
   invariants?: readonly string[];
+  /** Firestore composite indexes. Each is scoped to one owner by a leading `ownerId`. */
+  indexes?: readonly (readonly IndexField[])[];
+}
+
+export interface IndexField {
+  field: string;
+  order: "asc" | "desc";
 }
 
 export const defineEntity = (entity: Entity): Entity => entity;
@@ -126,6 +134,7 @@ export const f = {
   bigint: scalar("bigint"),
   float: scalar("float"),
   timestamp: scalar("timestamp"),
+  date: scalar("date"),
   json: scalar("json"),
   enum: (
     values: readonly [string, ...string[]],
@@ -156,12 +165,12 @@ export const VISIBILITY = ["private", "public"] as const;
 export const arcColumn = (arcName: string, target: EntityName): string =>
   `${arcName}${target}Id`;
 
-/** The complete field list of an entity, including implied columns. */
+/** The complete field list of an entity, including implied fields. */
 export function allFields(entity: Entity): Record<string, Field> {
   const fields: Record<string, Field> = {};
 
   if (entity.scope !== "root") {
-    fields.ownerId = f.ref("User", "The user who owns this row.", { sameOwner: false });
+    fields.ownerId = f.ref("User", "The user who owns this document.", { sameOwner: false });
   }
   if (entity.scope === "object") {
     fields.visibility = f.enum(VISIBILITY, "Private by default; public is opt-in.");

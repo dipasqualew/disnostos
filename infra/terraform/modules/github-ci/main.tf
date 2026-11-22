@@ -117,6 +117,46 @@ resource "google_project_iam_custom_role" "deployer" {
     "artifactregistry.repositories.get",
     "artifactregistry.repositories.list",
     "artifactregistry.repositories.update",
+
+    # Identity Platform settings. No firebaseauth.users.* permission: CI cannot
+    # read, create, or change user accounts.
+    "firebaseauth.configs.get",
+    "firebaseauth.configs.getHashConfig",
+    "firebaseauth.configs.update",
+
+    # The browser API key: refreshed by Terraform, read at web build time.
+    "apikeys.keys.get",
+    "apikeys.keys.getKeyString",
+    "apikeys.keys.list",
+    "apikeys.keys.update",
+
+    # Firestore database and generated indexes. No datastore.entities.*: CI
+    # cannot read or change user content, and cannot delete the database.
+    "datastore.databases.get",
+    "datastore.databases.getMetadata",
+    "datastore.databases.list",
+    "datastore.databases.update",
+    "datastore.indexes.create",
+    "datastore.indexes.delete",
+    "datastore.indexes.get",
+    "datastore.indexes.list",
+    "datastore.operations.get",
+
+    # The deny-all Firestore rules.
+    "firebaserules.releases.create",
+    "firebaserules.releases.get",
+    "firebaserules.releases.list",
+    "firebaserules.releases.update",
+    "firebaserules.rulesets.create",
+    "firebaserules.rulesets.get",
+    "firebaserules.rulesets.list",
+
+    # Image bucket settings. No storage.objects.*: CI cannot read images.
+    "storage.buckets.create",
+    "storage.buckets.get",
+    "storage.buckets.getIamPolicy",
+    "storage.buckets.list",
+    "storage.buckets.update",
   ]
 }
 

@@ -12,8 +12,14 @@ export const Trace = defineEntity({
     title: f.text("Optional title.", { optional: true }),
     body: f.text("The writing."),
     language: f.language("BCP 47 language tag.", { optional: true }),
-    writtenAt: f.timestamp("When the writer dates this entry.", { optional: true }),
+    writtenOn: f.date("The calendar day the writer dates this entry, as YYYY-MM-DD."),
   },
+  indexes: [
+    [
+      { field: "writtenOn", order: "desc" },
+      { field: "createdAt", order: "desc" },
+    ],
+  ],
 });
 
 export const Journal = defineEntity({
@@ -46,11 +52,16 @@ export const JournalTrace = defineEntity({
 export const TraceLink = defineEntity({
   name: "TraceLink",
   group,
-  description: "Attaches a trace to a beat or version without changing either.",
+  description: "Connects a trace to a beat, version, or another trace without changing either.",
   scope: "dependent",
   fields: {
     traceId: f.ref("Trace", "The trace."),
     note: f.text("Why these connect.", { optional: true }),
   },
-  arcs: { target: arc(["Beat", "Version"], "What the trace attaches to.") },
+  arcs: { target: arc(["Beat", "Version", "Trace"], "What the trace connects to.") },
+  unique: [["traceId", "target"]],
+  invariants: [
+    "A trace cannot link to itself.",
+    "A link between two traces is undirected: `traceId` holds the lower ID and `targetTraceId` the higher, so A-B and B-A are one link.",
+  ],
 });

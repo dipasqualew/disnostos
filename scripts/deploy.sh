@@ -78,7 +78,16 @@ deploy() {
     local api_url
     api_url="$(service_url api)"
     [[ -n "$api_url" ]] || { echo "ERROR: could not read the API URL" >&2; exit 1; }
-    build_args=(--build-arg "VITE_API_URL=$api_url")
+    local auth_api_key
+    auth_api_key="$(gcloud services api-keys get-key-string disnostos-web-auth \
+      --project="$PROJECT_ID" --format='value(keyString)')"
+    [[ -n "$auth_api_key" ]] || { echo "ERROR: could not read the web API key" >&2; exit 1; }
+    if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then echo "::add-mask::$auth_api_key"; fi
+    build_args=(
+      --build-arg "VITE_API_URL=$api_url"
+      --build-arg "VITE_FIREBASE_API_KEY=$auth_api_key"
+      --build-arg "VITE_FIREBASE_PROJECT_ID=$PROJECT_ID"
+    )
   fi
 
   if [[ "$TAG" == "$SHA" ]] && image_exists "$image"; then

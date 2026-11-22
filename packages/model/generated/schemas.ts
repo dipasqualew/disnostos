@@ -9,12 +9,22 @@ const language = z.string().refine((value) => {
   }
 }, "Expected a BCP 47 language tag");
 
+/** Identity Platform user IDs are opaque strings, not UUIDs. */
+const userId = z.string().min(1).max(128);
+
+/** A real calendar day as YYYY-MM-DD, with no time or timezone. */
+const calendarDate = z.string().refine((value) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}, "Expected a calendar date as YYYY-MM-DD");
+
 const exactlyOne = (value: Record<string, unknown>, keys: readonly string[]) =>
   keys.filter((key) => value[key] !== null && value[key] !== undefined).length === 1;
 
 export const AssetSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   bucket: z.string().min(1),
   objectKey: z.string().min(1),
@@ -39,7 +49,7 @@ export type AssetCreate = z.input<typeof AssetCreateSchema>;
 
 export const AttachmentSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   workId: z.uuid(),
   note: z.string().min(1).nullable(),
   targetBeatId: z.uuid().nullable(),
@@ -63,7 +73,7 @@ export type AttachmentCreate = z.input<typeof AttachmentCreateSchema>;
 
 export const CitationSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   workId: z.uuid(),
   locator: z.string().min(1).nullable(),
   note: z.string().min(1).nullable(),
@@ -89,8 +99,8 @@ export type CitationCreate = z.input<typeof CitationCreateSchema>;
 
 export const ShareSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
-  granteeId: z.uuid(),
+  ownerId: userId,
+  granteeId: userId,
   targetMythologyId: z.uuid().nullable(),
   targetTraditionId: z.uuid().nullable(),
   targetVersionId: z.uuid().nullable(),
@@ -105,7 +115,7 @@ export const ShareSchema = z.object({
 });
 export const SharePublicSchema = ShareSchema;
 export const ShareCreateSchema = z.strictObject({
-  granteeId: z.uuid(),
+  granteeId: userId,
   targetMythologyId: z.uuid().nullish(),
   targetTraditionId: z.uuid().nullish(),
   targetVersionId: z.uuid().nullish(),
@@ -122,7 +132,7 @@ export type SharePublic = z.infer<typeof SharePublicSchema>;
 export type ShareCreate = z.input<typeof ShareCreateSchema>;
 
 export const UserSchema = z.object({
-  id: z.uuid(),
+  id: userId,
   email: z.string().min(1),
   displayName: z.string().min(1),
   createdAt: z.coerce.date(),
@@ -139,7 +149,7 @@ export type UserCreate = z.input<typeof UserCreateSchema>;
 
 export const WorkSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   kind: z.enum(["poem","image","song","play","book","film","study","other"]),
   title: z.string().min(1),
@@ -170,7 +180,7 @@ export type WorkCreate = z.input<typeof WorkCreateSchema>;
 
 export const BeatSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   mythId: z.uuid(),
@@ -191,7 +201,7 @@ export type BeatCreate = z.input<typeof BeatCreateSchema>;
 
 export const DerivationSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   kind: z.enum(["retells","echoes","inverts","borrows_from","contradicts"]),
   note: z.string().min(1).nullable(),
   fromMythId: z.uuid().nullable(),
@@ -226,7 +236,7 @@ export type DerivationCreate = z.input<typeof DerivationCreateSchema>;
 
 export const InterpretationSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   title: z.string().min(1).nullable(),
@@ -256,7 +266,7 @@ export type InterpretationCreate = z.input<typeof InterpretationCreateSchema>;
 
 export const MythSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   title: z.string().min(1),
@@ -277,7 +287,7 @@ export type MythCreate = z.input<typeof MythCreateSchema>;
 
 export const MythologySchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   name: z.string().min(1),
   description: z.string().min(1).nullable(),
@@ -296,7 +306,7 @@ export type MythologyCreate = z.input<typeof MythologyCreateSchema>;
 
 export const MythologyTraditionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   mythologyId: z.uuid(),
   traditionId: z.uuid(),
   createdAt: z.coerce.date(),
@@ -313,7 +323,7 @@ export type MythologyTraditionCreate = z.input<typeof MythologyTraditionCreateSc
 
 export const TraditionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   name: z.string().min(1),
   description: z.string().min(1).nullable(),
@@ -332,7 +342,7 @@ export type TraditionCreate = z.input<typeof TraditionCreateSchema>;
 
 export const TraditionVersionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   traditionId: z.uuid(),
   versionId: z.uuid(),
   createdAt: z.coerce.date(),
@@ -349,7 +359,7 @@ export type TraditionVersionCreate = z.input<typeof TraditionVersionCreateSchema
 
 export const VersionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   mythId: z.uuid(),
@@ -372,7 +382,7 @@ export type VersionCreate = z.input<typeof VersionCreateSchema>;
 
 export const VersionBeatSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   versionId: z.uuid(),
   beatId: z.uuid(),
   wordingId: z.uuid().nullable(),
@@ -395,7 +405,7 @@ export type VersionBeatCreate = z.input<typeof VersionBeatCreateSchema>;
 
 export const VersionRevisionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   versionId: z.uuid(),
   number: z.int(),
   snapshot: z.json(),
@@ -414,7 +424,7 @@ export type VersionRevisionCreate = z.input<typeof VersionRevisionCreateSchema>;
 
 export const WordingSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   beatId: z.uuid(),
@@ -441,7 +451,7 @@ export type WordingCreate = z.input<typeof WordingCreateSchema>;
 
 export const WordingRevisionSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   wordingId: z.uuid(),
   number: z.int(),
   snapshot: z.json(),
@@ -460,7 +470,7 @@ export type WordingRevisionCreate = z.input<typeof WordingRevisionCreateSchema>;
 
 export const ArchetypeSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   kind: z.enum(["role","setting","symbol","trope"]),
@@ -483,7 +493,7 @@ export type ArchetypeCreate = z.input<typeof ArchetypeCreateSchema>;
 
 export const BeatArchetypeSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   beatId: z.uuid(),
   archetypeId: z.uuid(),
   note: z.string().min(1).nullable(),
@@ -502,7 +512,7 @@ export type BeatArchetypeCreate = z.input<typeof BeatArchetypeCreateSchema>;
 
 export const BeatFigureSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   beatId: z.uuid(),
   figureId: z.uuid(),
   note: z.string().min(1).nullable(),
@@ -521,7 +531,7 @@ export type BeatFigureCreate = z.input<typeof BeatFigureCreateSchema>;
 
 export const FigureSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   forkedFromId: z.uuid().nullable(),
   kind: z.enum(["character","place","object"]),
@@ -544,7 +554,7 @@ export type FigureCreate = z.input<typeof FigureCreateSchema>;
 
 export const FigureArchetypeSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   figureId: z.uuid(),
   archetypeId: z.uuid(),
   traditionId: z.uuid().nullable(),
@@ -565,7 +575,7 @@ export type FigureArchetypeCreate = z.input<typeof FigureArchetypeCreateSchema>;
 
 export const FigureNameSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   figureId: z.uuid(),
   language: language,
   name: z.string().min(1),
@@ -584,7 +594,7 @@ export type FigureNameCreate = z.input<typeof FigureNameCreateSchema>;
 
 export const JournalSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   name: z.string().min(1),
   description: z.string().min(1).nullable(),
@@ -603,7 +613,7 @@ export type JournalCreate = z.input<typeof JournalCreateSchema>;
 
 export const JournalTraceSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   journalId: z.uuid(),
   traceId: z.uuid(),
   position: z.number().finite(),
@@ -622,12 +632,12 @@ export type JournalTraceCreate = z.input<typeof JournalTraceCreateSchema>;
 
 export const TraceSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   visibility: z.enum(["private","public"]),
   title: z.string().min(1).nullable(),
   body: z.string().min(1),
   language: language.nullable(),
-  writtenAt: z.coerce.date().nullable(),
+  writtenOn: calendarDate,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -637,7 +647,7 @@ export const TraceCreateSchema = z.strictObject({
   title: z.string().min(1).nullish(),
   body: z.string().min(1),
   language: language.nullish(),
-  writtenAt: z.coerce.date().nullish(),
+  writtenOn: calendarDate,
 });
 export type Trace = z.infer<typeof TraceSchema>;
 export type TracePublic = z.infer<typeof TracePublicSchema>;
@@ -645,11 +655,12 @@ export type TraceCreate = z.input<typeof TraceCreateSchema>;
 
 export const TraceLinkSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   traceId: z.uuid(),
   note: z.string().min(1).nullable(),
   targetBeatId: z.uuid().nullable(),
   targetVersionId: z.uuid().nullable(),
+  targetTraceId: z.uuid().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -659,15 +670,16 @@ export const TraceLinkCreateSchema = z.strictObject({
   note: z.string().min(1).nullish(),
   targetBeatId: z.uuid().nullish(),
   targetVersionId: z.uuid().nullish(),
+  targetTraceId: z.uuid().nullish(),
 })
-  .refine((value) => exactlyOne(value, ["targetBeatId", "targetVersionId"]), { path: ["target"], error: "Set exactly one target" });
+  .refine((value) => exactlyOne(value, ["targetBeatId", "targetVersionId", "targetTraceId"]), { path: ["target"], error: "Set exactly one target" });
 export type TraceLink = z.infer<typeof TraceLinkSchema>;
 export type TraceLinkPublic = z.infer<typeof TraceLinkPublicSchema>;
 export type TraceLinkCreate = z.input<typeof TraceLinkCreateSchema>;
 
 export const TagSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   name: z.string().min(1),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -680,7 +692,7 @@ export type TagCreate = z.input<typeof TagCreateSchema>;
 
 export const TaggingSchema = z.object({
   id: z.uuid(),
-  ownerId: z.uuid(),
+  ownerId: userId,
   tagId: z.uuid(),
   targetAssetId: z.uuid().nullable(),
   targetWorkId: z.uuid().nullable(),

@@ -60,10 +60,50 @@ jobs:
         env:
           ENVIRONMENT: ${{ matrix.environment }}
 
+  e2e:
+    name: E2E (${{ matrix.browser }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Playwright and the Auth emulator run on real Node.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.18.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run e2e:check
+      - run: bun x playwright install --with-deps "$BROWSER"
+        working-directory: e2e
+        env:
+          BROWSER: ${{ matrix.browser }}
+      - run: bun run e2e --project="$BROWSER"
+        env:
+          BROWSER: ${{ matrix.browser }}
+      # Holds only emulator data and throwaway example.test accounts.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+
   # To add production, copy this job with its own inputs and `needs: deploy-staging`.
   deploy-staging:
     name: Deploy staging
-    needs: [app, terraform]
+    needs: [app, terraform, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'dipasqualew/disnostos'
     permissions:
       contents: read

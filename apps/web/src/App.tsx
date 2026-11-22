@@ -1,44 +1,130 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from './auth/AuthProvider';
+import { ForgotPassword, ResetPassword, SignIn } from './auth/screens';
+import { AUTH_ACTION_PATH, Link, useRouter } from './router';
+import { createTracesApi, type TracesApi } from './traces/api';
+import { clearAllDrafts } from './traces/drafts';
+import { TraceEditor } from './traces/TraceEditor';
+import { TraceList } from './traces/TraceList';
+import { TraceView } from './traces/TraceView';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+export { AUTH_ACTION_PATH };
 
-type ApiStatus =
-  | { state: 'loading' }
-  | { state: 'ok'; message: string }
-  | { state: 'unavailable' };
+const FORGOT_PASSWORD_PATH = '/forgot-password';
 
-async function fetchHello(signal: AbortSignal): Promise<string> {
-  const response = await fetch(`${API_URL}/hello`, { signal });
-  if (!response.ok) throw new Error(`Unexpected status ${response.status}`);
+/** Reads the reset code once and removes it from the URL and browser history. */
+function takeResetCode(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('mode') === 'resetPassword' ? params.get('oobCode') : null;
+  if (window.location.search) window.history.replaceState(null, '', window.location.pathname);
+  return code;
+}
 
-  const body = (await response.json()) as { message?: unknown };
-  if (typeof body.message !== 'string') throw new Error('Malformed response');
-  return body.message;
+type Route =
+  | { name: 'list' }
+  | { name: 'new' }
+  | { name: 'view'; id: string }
+  | { name: 'edit'; id: string }
+  | { name: 'missing' };
+
+export function matchRoute(path: string): Route {
+  if (path === '/') return { name: 'list' };
+  if (path === '/traces/new') return { name: 'new' };
+  const match = /^\/traces\/([^/]+)(\/edit)?\/?$/.exec(path);
+  if (!match) return { name: 'missing' };
+  return match[2] ? { name: 'edit', id: match[1]! } : { name: 'view', id: match[1]! };
+}
+
+function Page({ api, route }: { api: TracesApi; route: Route }) {
+  switch (route.name) {
+    case 'list':
+      return <TraceList api={api} />;
+    case 'new':
+      return <TraceEditor key="new" api={api} traceId={null} />;
+    case 'view':
+      return <TraceView key={route.id} api={api} traceId={route.id} />;
+    case 'edit':
+      return <TraceEditor key={route.id} api={api} traceId={route.id} />;
+    case 'missing':
+      return (
+        <>
+          <h1>Page not found</h1>
+          <Link to="/">Back to your traces</Link>
+        </>
+      );
+  }
+}
+
+function Journal() {
+  const { client, user } = useAuth();
+  const { path, navigate, guard } = useRouter();
+  const api = useMemo(() => createTracesApi(client), [client]);
+  const main = useRef<HTMLElement>(null);
+  const firstRender = useRef(true);
+
+  // Moves keyboard and screen reader users to the new page's content.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    main.current?.focus({ preventScroll: true });
+  }, [path]);
+
+  useEffect(() => {
+    if (path === FORGOT_PASSWORD_PATH) navigate('/', { replace: true });
+  }, [path, navigate]);
+
+  function signOut() {
+    guard(() => {
+      clearAllDrafts();
+      navigate('/', { force: true, replace: true });
+      void client.signOut();
+    });
+  }
+
+  return (
+    <div className="journal">
+      <a className="skip" href="#content">Skip to content</a>
+      <header className="masthead">
+        <Link to="/" className="wordmark">disnostos</Link>
+        <nav aria-label="Account">
+          <span className="muted small account">{user?.email}</span>
+          <button type="button" className="link" onClick={signOut}>Sign out</button>
+        </nav>
+      </header>
+      <main id="content" ref={main} tabIndex={-1} className="page">
+        <Page api={api} route={matchRoute(path)} />
+      </main>
+    </div>
+  );
 }
 
 export function App() {
-  const [status, setStatus] = useState<ApiStatus>({ state: 'loading' });
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetchHello(controller.signal)
-      .then((message) => setStatus({ state: 'ok', message }))
-      .catch(() => {
-        if (!controller.signal.aborted) setStatus({ state: 'unavailable' });
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  return (
-    <main>
-      <h1>disnostos</h1>
-      <p className={`status status-${status.state}`} role="status">
-        {status.state === 'loading' && 'Checking API…'}
-        {status.state === 'ok' && status.message}
-        {status.state === 'unavailable' && 'API unavailable'}
-      </p>
-    </main>
+  const { user } = useAuth();
+  const { path, search, navigate } = useRouter();
+  const [resetCode] = useState(() =>
+    window.location.pathname === AUTH_ACTION_PATH ? takeResetCode() : null,
   );
+  // Where a signed-out visitor was heading, kept through the forgot-password detour.
+  const returnTo = useRef('/');
+  if (!user && path !== FORGOT_PASSWORD_PATH && path !== AUTH_ACTION_PATH) {
+    returnTo.current = `${path}${search}`;
+  }
+
+  // The reset page works whether or not someone is signed in on this browser.
+  if (path === AUTH_ACTION_PATH) return <ResetPassword code={resetCode} navigate={navigate} />;
+
+  if (user === undefined) {
+    return (
+      <main>
+        <p className="status" role="status">Loading…</p>
+      </main>
+    );
+  }
+  if (user) return <Journal />;
+
+  const authNavigate = (to: string) => navigate(to === '/' ? returnTo.current : to);
+  if (path === FORGOT_PASSWORD_PATH) return <ForgotPassword navigate={authNavigate} />;
+  return <SignIn navigate={authNavigate} />;
 }
