@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { errorMessage, isAbort, type TraceImage, type TracesApi } from './api';
 import { ConfirmDialog } from './ui';
 
@@ -14,7 +15,9 @@ export function imageFileProblem(file: Pick<File, 'name' | 'type' | 'size'>): st
   return null;
 }
 
-function AuthedImage({ api, image }: { api: TracesApi; image: TraceImage }) {
+type AuthedImageProps = { api: TracesApi; traceId: string; imageId: string; alt: string };
+
+export function AuthedImage({ api, traceId, imageId, alt }: AuthedImageProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -23,7 +26,7 @@ function AuthedImage({ api, image }: { api: TracesApi; image: TraceImage }) {
     const controller = new AbortController();
     let objectUrl: string | null = null;
     setFailed(false);
-    api.imageBlob(image.traceId, image.id, controller.signal).then(
+    api.imageBlob(traceId, imageId, controller.signal).then(
       (blob) => {
         if (controller.signal.aborted) return;
         objectUrl = URL.createObjectURL(blob);
@@ -38,140 +41,82 @@ function AuthedImage({ api, image }: { api: TracesApi; image: TraceImage }) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       setUrl(null);
     };
-  }, [api, image.id, image.traceId, attempt]);
+  }, [api, imageId, traceId, attempt]);
 
   if (failed) {
     return (
       <div className="image-placeholder" role="alert">
-        <span>Could not load {image.title}.</span>
-        <button type="button" className="link" onClick={() => setAttempt((n) => n + 1)}>
+        <span>Could not load {alt || 'this image'}.</span>
+        <button type="button" className="text-button" onClick={() => setAttempt((n) => n + 1)}>
           Try again
         </button>
       </div>
     );
   }
-  if (!url) return <div className="image-placeholder" role="status">Loading image…</div>;
-  return <img src={url} alt={image.title} />;
+  if (!url) return <div className="image-placeholder is-loading" role="status" aria-label="Loading image" />;
+  return <img src={url} alt={alt} />;
 }
 
 type Props = {
   api: TracesApi;
   traceId: string;
   images: TraceImage[];
-  focusPicker: boolean;
   onChange(images: TraceImage[]): void;
 };
 
-export function TraceImages({ api, traceId, images, focusPicker, onChange }: Props) {
-  const input = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState<string | null>(null);
-  const [errors, setErrors] = useState<string[]>([]);
+/** Images attached before media lived in the writing. They stay visible and removable. */
+export function LooseImages({ api, traceId, images, onChange }: Props) {
   const [removing, setRemoving] = useState<TraceImage | null>(null);
-  const [removeBusy, setRemoveBusy] = useState(false);
-  const [removeError, setRemoveError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (focusPicker) input.current?.focus();
-  }, [focusPicker]);
-
-  async function upload(event: ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])];
-    event.target.value = '';
-    if (!files.length) return;
-    const problems: string[] = [];
-    let current = images;
-    for (const [index, file] of files.entries()) {
-      const problem = imageFileProblem(file);
-      if (problem) {
-        problems.push(problem);
-        continue;
-      }
-      setUploading(files.length > 1 ? `Uploading ${index + 1} of ${files.length}…` : `Uploading ${file.name}…`);
-      try {
-        const image = await api.addImage(traceId, file);
-        current = [...current, image];
-        onChange(current);
-      } catch (caught) {
-        problems.push(`${file.name}: ${errorMessage(caught)}`);
-      }
-    }
-    setUploading(null);
-    setErrors(problems);
-  }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function confirmRemove() {
     if (!removing) return;
-    setRemoveBusy(true);
-    setRemoveError(null);
+    setBusy(true);
+    setError(null);
     try {
       await api.removeImage(traceId, removing.id);
       onChange(images.filter((image) => image.id !== removing.id));
       setRemoving(null);
     } catch (caught) {
-      setRemoveError(errorMessage(caught));
+      setError(errorMessage(caught));
     } finally {
-      setRemoveBusy(false);
+      setBusy(false);
     }
   }
 
+  if (images.length === 0) return null;
   return (
-    <section className="panel" aria-labelledby="images-heading">
-      <div className="panel-head">
-        <h2 id="images-heading">Images</h2>
-        <label className={`button quiet file-button ${uploading ? 'is-busy' : ''}`}>
-          <input
-            ref={input}
-            className="sr-only"
-            type="file"
-            accept={IMAGE_TYPES.join(',')}
-            multiple
-            disabled={uploading !== null}
-            onChange={(event) => void upload(event)}
-          />
-          Add image
-        </label>
-      </div>
-      {uploading && <p className="muted" role="status">{uploading}</p>}
-      {errors.map((message) => (
-        <p key={message} className="error" role="alert">{message}</p>
+    <ul className="loose-images" aria-label="Attached images">
+      {images.map((image) => (
+        <li key={image.id}>
+          <figure className="embed">
+            <AuthedImage api={api} traceId={traceId} imageId={image.id} alt={image.title} />
+            <button
+              type="button"
+              className="icon-button embed-remove"
+              aria-label={`Remove image ${image.title}`}
+              onClick={() => {
+                setError(null);
+                setRemoving(image);
+              }}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </figure>
+        </li>
       ))}
-      {images.length === 0 && !uploading && <p className="muted">No images on this trace.</p>}
-      {images.length > 0 && (
-        <ul className="gallery">
-          {images.map((image) => (
-            <li key={image.id}>
-              <figure>
-                <AuthedImage api={api} image={image} />
-                <figcaption>
-                  <span>{image.title}</span>
-                  <button
-                    type="button"
-                    className="link"
-                    aria-label={`Remove image ${image.title}`}
-                    onClick={() => {
-                      setRemoveError(null);
-                      setRemoving(image);
-                    }}
-                  >
-                    Remove
-                  </button>
-                </figcaption>
-              </figure>
-            </li>
-          ))}
-        </ul>
-      )}
       {removing && (
         <ConfirmDialog
           title="Remove this image?"
           body={`${removing.title} will be permanently deleted.`}
           confirmLabel="Remove image"
-          busy={removeBusy}
-          error={removeError}
+          busy={busy}
+          error={error}
           onCancel={() => setRemoving(null)}
           onConfirm={() => void confirmRemove()}
         />
       )}
-    </section>
+    </ul>
   );
 }

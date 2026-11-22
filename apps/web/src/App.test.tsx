@@ -58,7 +58,7 @@ describe('sign in', () => {
     type('Password', PASSWORD);
     click('Sign in');
 
-    expect(await screen.findByText('Nothing written yet.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Nothing here yet' })).toBeInTheDocument();
     expect(client.signIn).toHaveBeenCalledWith('user@example.com', PASSWORD);
     const [url, init] = vi.mocked(fetch).mock.calls[0]!;
     expect(String(url)).toMatch(/\/traces\?limit=20$/);
