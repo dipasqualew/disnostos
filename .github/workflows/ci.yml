@@ -34,6 +34,30 @@ jobs:
       - run: bun run typecheck
       - run: bun run build
 
+  images:
+    name: Build image (${{ matrix.service }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, web]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Placeholder values: the image is discarded and never pushed.
+      - run: |
+          docker build -f "apps/$SERVICE/Dockerfile" \
+            --build-arg VITE_API_URL=https://api.invalid \
+            --build-arg VITE_FIREBASE_API_KEY=ci \
+            --build-arg VITE_FIREBASE_PROJECT_ID=ci \
+            .
+        env:
+          SERVICE: ${{ matrix.service }}
+
   terraform:
     name: Terraform checks (${{ matrix.environment }})
     runs-on: ubuntu-24.04
@@ -103,7 +127,7 @@ jobs:
   # Production is deployed manually: see deploy-prod.yml.
   deploy-staging:
     name: Deploy staging
-    needs: [app, terraform, e2e]
+    needs: [app, images, terraform, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'dipasqualew/disnostos'
     permissions:
       contents: read

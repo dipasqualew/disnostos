@@ -12,6 +12,7 @@ COPY package.json bun.lock tsconfig.base.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/model/package.json packages/model/
+COPY packages/fixtures/package.json packages/fixtures/
 COPY e2e/package.json e2e/
 RUN bun install --frozen-lockfile
 COPY apps/web apps/web
