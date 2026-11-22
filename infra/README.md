@@ -7,10 +7,12 @@ Prerequisites: `gcloud` and ADC logins (`gcloud auth login`,
 `gcloud auth application-default login`), Terraform 1.9+, and Docker with buildx.
 The scripts set the project per command and never change your gcloud config.
 
+Commands below use `staging`; `prod` works the same way.
+
 Identifiers are kept out of this public repository. Locally, copy
-`infra/.env.example` to the gitignored `infra/.env.staging` and fill it in. CI
+`infra/.env.example` to the gitignored `infra/.env.<env>` and fill it in. CI
 reads `GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, and
-`GCP_SERVICE_ACCOUNT` from the `staging` GitHub environment, which also stores
+`GCP_SERVICE_ACCOUNT` from the matching GitHub environment, which also stores
 `GCP_ORG_ID` and `GCP_BILLING_ACCOUNT_ID` and only admits the `main` branch.
 GitHub secrets cannot be read back, so keep your local file.
 
@@ -66,12 +68,17 @@ script to switch to the in-app page once Google allows it.
 
 `.github/workflows/ci.yml` runs tests, typecheck, build, and credential-free
 Terraform checks on pull requests and pushes to `main`. After a push to `main`
-passes, `.github/workflows/deploy.yml` runs `terraform apply` and then
-`scripts/deploy.sh`, one run per environment at a time.
+passes, `.github/workflows/deploy.yml` deploys staging with `terraform apply` and
+then `scripts/deploy.sh`, one run per environment at a time.
+
+Production is manual. Run the **Deploy production** workflow from `main`, in the
+Actions tab or with `gh workflow run deploy-prod.yml --ref main`. It deploys the
+latest commit on `main` and refuses a commit whose CI run did not pass.
 
 GitHub authenticates through Workload Identity Federation (`modules/github-ci`).
-Only `push` events on `refs/heads/main` of the repository with the pinned numeric
-ID can get credentials. No service account keys exist.
+Only `refs/heads/main` of the repository with the pinned numeric ID can get
+credentials, and only on `push` for staging or `workflow_dispatch` for prod. No
+service account keys exist.
 
 CI cannot change IAM. Apply changes to `modules/github-ci`, and any change that
 adds an IAM binding, with `infra/tf.sh` as a project owner **before** merging;
@@ -94,14 +101,14 @@ API tests that need Firestore are skipped unless `FIRESTORE_EMULATOR_HOST` is se
 
 ## Budget alert
 
-`infra/terraform/environments/staging-billing` holds a 10 GBP calendar-month
-budget for the staging project only. It emails the default billing recipients at
+`infra/terraform/environments/<env>-billing` holds a 10 GBP calendar-month
+budget for that environment's project only. It emails the default billing recipients at
 50%, 90%, and 100% of actual spend and 100% of forecasted spend. **A budget
 alerts but does not cap spending.**
 
 CI has no billing access and does not manage this root. Apply it locally as a
 user with billing permissions; it reads `GCP_BILLING_ACCOUNT_ID` from
-`infra/.env.staging`. The budget currency must match the billing account (GBP):
+`infra/.env.<env>`. The budget currency must match the billing account (GBP):
 
 ```sh
 infra/tf-billing.sh staging init
@@ -112,7 +119,7 @@ infra/tf-billing.sh staging apply billing.tfplan
 ## Adding an environment
 
 Add `infra/terraform/environments/<env>` using the shared modules, then add the
-environment to the `case` statement in `infra/bootstrap.sh`, `infra/tf.sh`, and
-`scripts/deploy.sh`. Create `infra/.env.<env>`, apply it locally once to create
+environment to the `case` statement in `infra/bootstrap.sh`, `infra/tf.sh`,
+`infra/tf-billing.sh`, `infra/configure-auth.sh`, and `scripts/deploy.sh`. Create `infra/.env.<env>`, apply it locally once to create
 its CI identity, create a matching GitHub environment with the secrets above, and
 add a `deploy-<env>` job to `ci.yml`.

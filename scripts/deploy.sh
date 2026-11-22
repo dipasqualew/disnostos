@@ -2,18 +2,18 @@
 # Builds, pushes, and releases service images. Non-interactive, for local and CI use.
 # Infrastructure changes belong in Terraform; this only replaces the running image.
 #
-# Usage: scripts/deploy.sh staging <api|web|all>
+# Usage: scripts/deploy.sh <staging|prod> <api|web|all>
 #
 # Image tags are immutable:
 #   clean tree   <12-char git SHA>; an existing image for that SHA is reused
 #   dirty tree   <12-char git SHA>-dirty-<UTC timestamp>
 set -euo pipefail
 
-usage() { echo "Usage: $0 staging <api|web|all>" >&2; exit 2; }
+usage() { echo "Usage: $0 <staging|prod> <api|web|all>" >&2; exit 2; }
 
 [[ $# -eq 2 ]] || usage
 case "$1" in
-  staging) ;;
+  staging|prod) ;;
   *) usage ;;
 esac
 source "$(dirname "${BASH_SOURCE[0]}")/../infra/env.sh"
