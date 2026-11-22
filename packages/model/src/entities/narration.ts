@@ -17,6 +17,7 @@ export const Myth = defineEntity({
     title: f.text("Name of the story."),
     summary: f.text("Short description.", { optional: true }),
   },
+  indexes: [[{ field: "createdAt", order: "desc" }]],
 });
 
 export const Beat = defineEntity({
@@ -72,6 +73,7 @@ export const Version = defineEntity({
     title: f.text("Name of this telling."),
     description: f.text("Context for this telling.", { optional: true }),
   },
+  indexes: [[{ field: "createdAt", order: "desc" }]],
   invariants: [
     "Publishing a version requires its beats and chosen wordings to be public.",
   ],
@@ -134,6 +136,7 @@ export const Tradition = defineEntity({
     name: f.text("Name of the tradition."),
     description: f.text("What unites these versions.", { optional: true }),
   },
+  indexes: [[{ field: "createdAt", order: "desc" }]],
 });
 
 export const TraditionVersion = defineEntity({
@@ -157,6 +160,7 @@ export const Mythology = defineEntity({
     name: f.text("Name of the mythology."),
     description: f.text("What this mythology covers.", { optional: true }),
   },
+  indexes: [[{ field: "createdAt", order: "desc" }]],
 });
 
 export const MythologyTradition = defineEntity({
@@ -184,13 +188,19 @@ export const Derivation = defineEntity({
     note: f.text("Explains the connection.", { optional: true }),
   },
   arcs: {
-    from: arc(["Myth", "Version", "Beat", "Figure"], "The owner's side of the link."),
+    from: arc(["Myth", "Version", "Beat", "Figure"], "The owner's side of the link.", {
+      onDelete: "keep",
+    }),
     to: arc(["Myth", "Version", "Beat", "Figure"], "The linked object, which may be another user's.", {
       sameOwner: false,
+      onDelete: "keep",
     }),
   },
   invariants: [
-    "A viewer sees a derivation only if they can see both ends.",
+    "A viewer other than the owner sees a derivation only if they can see both ends.",
     "A public object never reveals that a private object links to it.",
+    "Deleting either end, directly or through a cascade, never deletes the derivation: its kind, note, owner, and stored end references are kept.",
+    "A deleted end counts as not visible.",
+    "When the owner cannot see an end, they get a placeholder with the kind and note and nothing about that end, so a deleted object and another user's private object look the same.",
   ],
 });

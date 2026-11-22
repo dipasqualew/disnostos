@@ -6,10 +6,13 @@
   "scripts": {
     "e2e": "bun stack/run.ts",
     "check": "bun scripts/check-guidelines.ts",
+    "demo": "bun stack/demo.ts",
+    "demo:stop": "bun stack/demo.ts stop",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@disnostos/api": "workspace:*",
+    "@disnostos/fixtures": "workspace:*",
     "@google-cloud/firestore": "9.4.1",
     "@google-cloud/storage": "9.0.0",
     "@playwright/test": "1.65.1",

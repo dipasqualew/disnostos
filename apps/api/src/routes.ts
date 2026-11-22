@@ -2,17 +2,8 @@ import type { AuthUser } from "./auth";
 import type { DataLayer } from "./data/traces";
 import { DataError } from "./data/errors";
 import { MAX_IMAGE_BYTES } from "./data/images";
-
-const json = (body: unknown, status = 200) => Response.json(body, { status });
-const noContent = () => new Response(null, { status: 204 });
-
-async function readJson(request: Request): Promise<unknown> {
-  try {
-    return await request.json();
-  } catch {
-    throw new DataError(400, "Body must be valid JSON");
-  }
-}
+import { json, noContent, readJson } from "./http";
+import { dispatchNarrative, isNarrativePath } from "./narrativeRoutes";
 
 /** Reads an upload, stopping as soon as it passes the limit. */
 async function readUpload(request: Request): Promise<Uint8Array> {
@@ -44,7 +35,7 @@ async function readUpload(request: Request): Promise<Uint8Array> {
 
 /** True for every path this module serves, so that all of them require auth. */
 export const isDataPath = (pathname: string) =>
-  pathname === "/traces" || pathname.startsWith("/traces/");
+  pathname === "/traces" || pathname.startsWith("/traces/") || isNarrativePath(pathname);
 
 async function dispatch(request: Request, user: AuthUser, data: DataLayer): Promise<Response> {
   const url = new URL(request.url);
@@ -116,6 +107,9 @@ export async function handleData(
 ): Promise<Response> {
   if (!data) return json({ error: "Storage is not configured" }, 503);
   try {
+    if (isNarrativePath(new URL(request.url).pathname)) {
+      return await dispatchNarrative(request, user.uid, data.narrative);
+    }
     return await dispatch(request, user, data);
   } catch (error) {
     if (error instanceof DataError) {

@@ -1,22 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
-import {
-  FieldPath,
-  Timestamp,
-  type DocumentData,
-  type DocumentReference,
-  type Firestore,
-  type Transaction,
-} from "@google-cloud/firestore";
+import { FieldPath, Timestamp, type Firestore } from "@google-cloud/firestore";
 import { collections, converters } from "@disnostos/model/firestore";
 import { TraceCreateSchema, type Trace } from "@disnostos/model/schemas";
-import { allFields, entities, type EntityName, type OnDelete } from "@disnostos/model/spec";
 import { z } from "zod";
 import type { BlobStore } from "./blobs";
+import { parse, parseLimit, stableId } from "./common";
+import { DeletePlan } from "./deletePlan";
 import { conflict, DataError, invalid, notFound } from "./errors";
 import { detectImageType, MAX_IMAGE_BYTES } from "./images";
+import { createNarrativeLayer } from "./narrative";
 
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
 /** Keeps a trace well inside Firestore's 1 MiB document limit. */
 const MAX_BODY_BYTES = 512 * 1024;
 const MAX_NOTE_LENGTH = 2000;
@@ -62,15 +55,6 @@ export type DataLayer = ReturnType<typeof createDataLayer>;
 
 const traceView = ({ ownerId: _owner, visibility: _visibility, ...view }: Trace): TraceView => view;
 
-function parse<T>(schema: z.ZodType<T>, value: unknown): T {
-  const result = schema.safeParse(value);
-  if (result.success) return result.data;
-  throw invalid(
-    "Invalid request",
-    result.error.issues.map(({ path, message }) => ({ path: path.join("."), message })),
-  );
-}
-
 function assertSize(body: string | undefined) {
   if (body !== undefined && Buffer.byteLength(body) > MAX_BODY_BYTES) {
     throw new DataError(413, "Trace body is too large");
@@ -96,109 +80,6 @@ function decodeCursor(cursor: string): [string, Timestamp, string] {
     // Reported below.
   }
   throw invalid("Invalid cursor");
-}
-
-function parseLimit(value: string | null | undefined): number {
-  if (value === null || value === undefined) return DEFAULT_PAGE_SIZE;
-  const limit = Number(value);
-  if (!/^\d+$/.test(value) || limit < 1 || limit > MAX_PAGE_SIZE) {
-    throw invalid(`limit must be between 1 and ${MAX_PAGE_SIZE}`);
-  }
-  return limit;
-}
-
-/** One ID per unordered pair of traces, which makes a duplicate link a document conflict. */
-function linkId(ownerId: string, low: string, high: string): string {
-  const hash = createHash("sha256").update(`${ownerId}\n${low}\n${high}`).digest();
-  hash[6] = (hash[6]! & 0x0f) | 0x80;
-  hash[8] = (hash[8]! & 0x3f) | 0x80;
-  const hex = hash.subarray(0, 16).toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-type Referrer = { entity: EntityName; field: string; onDelete: OnDelete };
-
-/** Every field in the model that points at an entity, excluding ownership. */
-function referrersOf(name: EntityName): Referrer[] {
-  return entities.flatMap((entity) =>
-    Object.entries(allFields(entity)).flatMap(([field, definition]) =>
-      definition.type === "ref" && definition.to === name && field !== "ownerId"
-        ? [{ entity: entity.name, field, onDelete: definition.onDelete }]
-        : [],
-    ),
-  );
-}
-
-/** The writes a delete implies. Built from reads, then applied, as transactions require. */
-class DeletePlan {
-  readonly deletes = new Map<string, DocumentReference>();
-  readonly clears = new Map<string, { ref: DocumentReference; fields: Set<string> }>();
-  readonly objectKeys: string[] = [];
-
-  constructor(
-    private readonly db: Firestore,
-    private readonly tx: Transaction,
-  ) {}
-
-  /** Applies the model's onDelete rules, as Postgres foreign keys would have. */
-  async remove(name: EntityName, ref: DocumentReference): Promise<void> {
-    if (this.deletes.has(ref.path)) return;
-    this.deletes.set(ref.path, ref);
-
-    for (const { entity, field, onDelete } of referrersOf(name)) {
-      const found = await this.tx.get(
-        this.db.collection(collections[entity]).where(field, "==", ref.id),
-      );
-      for (const doc of found.docs) {
-        if (onDelete === "cascade") {
-          await this.remove(entity, doc.ref);
-        } else if (onDelete === "set null") {
-          const entry = this.clears.get(doc.ref.path) ?? { ref: doc.ref, fields: new Set() };
-          entry.fields.add(field);
-          this.clears.set(doc.ref.path, entry);
-        } else if (!this.deletes.has(doc.ref.path)) {
-          throw conflict(`Still referenced by ${entity}`);
-        }
-      }
-    }
-  }
-
-  /** Removes an uploaded image's Work, Asset, and file once nothing else uses them. */
-  async removeImageWork(workId: string): Promise<void> {
-    const { db, tx } = this;
-    const workRef = db.collection(collections.Work).doc(workId);
-    const [attachments, citations, workSnapshot] = await Promise.all([
-      tx.get(db.collection(collections.Attachment).where("workId", "==", workId)),
-      tx.get(db.collection(collections.Citation).where("workId", "==", workId)),
-      tx.get(workRef),
-    ]);
-    const work = workSnapshot.data();
-    if (!work || work.kind !== "image" || !citations.empty) return;
-    if (attachments.docs.some((doc) => !this.deletes.has(doc.ref.path))) return;
-
-    await this.remove("Work", workRef);
-    if (typeof work.assetId !== "string") return;
-
-    const users = await tx.get(
-      db.collection(collections.Work).where("assetId", "==", work.assetId),
-    );
-    if (users.docs.some((doc) => !this.deletes.has(doc.ref.path))) return;
-    const assetRef = db.collection(collections.Asset).doc(work.assetId);
-    const asset = (await tx.get(assetRef)).data();
-    if (!asset) return;
-    await this.remove("Asset", assetRef);
-    this.objectKeys.push(asset.objectKey as string);
-  }
-
-  apply(now: Date): void {
-    for (const ref of this.deletes.values()) this.tx.delete(ref);
-    for (const { ref, fields } of this.clears.values()) {
-      if (this.deletes.has(ref.path)) continue;
-      const update: DocumentData = { updatedAt: now };
-      for (const field of fields) update[field] = null;
-      this.tx.update(ref, update);
-    }
-  }
 }
 
 /**
@@ -308,6 +189,8 @@ export function createDataLayer(db: Firestore, blobs: BlobStore) {
   }
 
   return {
+    narrative: createNarrativeLayer(db),
+
     async createTrace(ownerId: string, input: unknown): Promise<TraceView> {
       const data = parse(TraceInputSchema, input);
       assertSize(data.body);
@@ -488,7 +371,7 @@ export function createDataLayer(db: Firestore, blobs: BlobStore) {
       const { traceId: otherId, note } = parse(LinkInputSchema, input);
       if (otherId === traceId) throw invalid("A trace cannot link to itself");
       const [low, high] = traceId < otherId ? [traceId, otherId] : [otherId, traceId];
-      const id = linkId(ownerId, low, high);
+      const id = stableId(ownerId, low, high);
       const now = new Date();
 
       return db.runTransaction(async (tx) => {

@@ -215,19 +215,22 @@ A typed link between myths, versions, beats, or figures, across any mythologies.
 | `ownerId` | → User | required | The user who owns this document. |
 | `kind` | retells \| echoes \| inverts \| borrows_from \| contradicts | required | How the source relates to the target. |
 | `note` | text | optional | Explains the connection. |
-| `fromMythId` | → Myth | optional, same owner | The owner's side of the link. |
-| `fromVersionId` | → Version | optional, same owner | The owner's side of the link. |
-| `fromBeatId` | → Beat | optional, same owner | The owner's side of the link. |
-| `fromFigureId` | → Figure | optional, same owner | The owner's side of the link. |
-| `toMythId` | → Myth | optional | The linked object, which may be another user's. |
-| `toVersionId` | → Version | optional | The linked object, which may be another user's. |
-| `toBeatId` | → Beat | optional | The linked object, which may be another user's. |
-| `toFigureId` | → Figure | optional | The linked object, which may be another user's. |
+| `fromMythId` | → Myth | optional, same owner, kept when target is deleted | The owner's side of the link. |
+| `fromVersionId` | → Version | optional, same owner, kept when target is deleted | The owner's side of the link. |
+| `fromBeatId` | → Beat | optional, same owner, kept when target is deleted | The owner's side of the link. |
+| `fromFigureId` | → Figure | optional, same owner, kept when target is deleted | The owner's side of the link. |
+| `toMythId` | → Myth | optional, kept when target is deleted | The linked object, which may be another user's. |
+| `toVersionId` | → Version | optional, kept when target is deleted | The linked object, which may be another user's. |
+| `toBeatId` | → Beat | optional, kept when target is deleted | The linked object, which may be another user's. |
+| `toFigureId` | → Figure | optional, kept when target is deleted | The linked object, which may be another user's. |
 
 - Exactly one `from*Id` field must be set.
 - Exactly one `to*Id` field must be set.
-- A viewer sees a derivation only if they can see both ends.
+- A viewer other than the owner sees a derivation only if they can see both ends.
 - A public object never reveals that a private object links to it.
+- Deleting either end, directly or through a cascade, never deletes the derivation: its kind, note, owner, and stored end references are kept.
+- A deleted end counts as not visible.
+- When the owner cannot see an end, they get a placeholder with the kind and note and nothing about that end, so a deleted object and another user's private object look the same.
 
 ### Interpretation
 
@@ -521,21 +524,22 @@ Applies a tag to any object its owner can see, including another user's. Scope: 
 | --- | --- | --- | --- |
 | `ownerId` | → User | required | The user who owns this document. |
 | `tagId` | → Tag | required, same owner | The tag. |
-| `targetAssetId` | → Asset | optional | The tagged object, which may be another user's. |
-| `targetWorkId` | → Work | optional | The tagged object, which may be another user's. |
-| `targetMythId` | → Myth | optional | The tagged object, which may be another user's. |
-| `targetBeatId` | → Beat | optional | The tagged object, which may be another user's. |
-| `targetWordingId` | → Wording | optional | The tagged object, which may be another user's. |
-| `targetVersionId` | → Version | optional | The tagged object, which may be another user's. |
-| `targetInterpretationId` | → Interpretation | optional | The tagged object, which may be another user's. |
-| `targetTraditionId` | → Tradition | optional | The tagged object, which may be another user's. |
-| `targetMythologyId` | → Mythology | optional | The tagged object, which may be another user's. |
-| `targetFigureId` | → Figure | optional | The tagged object, which may be another user's. |
-| `targetArchetypeId` | → Archetype | optional | The tagged object, which may be another user's. |
-| `targetTraceId` | → Trace | optional | The tagged object, which may be another user's. |
-| `targetJournalId` | → Journal | optional | The tagged object, which may be another user's. |
+| `targetAssetId` | → Asset | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetWorkId` | → Work | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetMythId` | → Myth | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetBeatId` | → Beat | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetWordingId` | → Wording | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetVersionId` | → Version | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetInterpretationId` | → Interpretation | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetTraditionId` | → Tradition | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetMythologyId` | → Mythology | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetFigureId` | → Figure | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetArchetypeId` | → Archetype | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetTraceId` | → Trace | optional, kept when target is deleted | The tagged object, which may be another user's. |
+| `targetJournalId` | → Journal | optional, kept when target is deleted | The tagged object, which may be another user's. |
 
 - Exactly one `target*Id` field must be set.
 - The tagger must be able to see the target when tagging it.
 - If the target stops being visible to the tagger, the tagging is kept but hidden, and reveals nothing about the target.
+- A deleted target counts as not visible. Deleting the tag itself deletes its taggings.
 - A target's owner never learns that it was tagged, including through counts.

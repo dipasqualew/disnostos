@@ -42,7 +42,8 @@ export type ScalarType =
   | "date"
   | "json";
 
-export type OnDelete = "cascade" | "restrict" | "set null";
+/** `keep` leaves the referrer and its stored ID untouched, so the reference may dangle. */
+export type OnDelete = "cascade" | "restrict" | "set null" | "keep";
 
 interface FieldBase {
   description: string;
@@ -75,6 +76,7 @@ export interface Arc {
   description: string;
   targets: readonly [EntityName, EntityName, ...EntityName[]];
   sameOwner: boolean;
+  onDelete: OnDelete;
 }
 
 /**
@@ -157,8 +159,13 @@ export const f = {
 export const arc = (
   targets: Arc["targets"],
   description: string,
-  options: { sameOwner?: boolean } = {},
-): Arc => ({ targets, description, sameOwner: options.sameOwner ?? true });
+  options: { sameOwner?: boolean; onDelete?: OnDelete } = {},
+): Arc => ({
+  targets,
+  description,
+  sameOwner: options.sameOwner ?? true,
+  onDelete: options.onDelete ?? "cascade",
+});
 
 export const VISIBILITY = ["private", "public"] as const;
 
@@ -188,7 +195,7 @@ export function allFields(entity: Entity): Record<string, Field> {
     for (const target of definition.targets) {
       fields[arcColumn(arcName, target)] = f.ref(target, definition.description, {
         optional: true,
-        onDelete: "cascade",
+        onDelete: definition.onDelete,
         sameOwner: definition.sameOwner,
       });
     }

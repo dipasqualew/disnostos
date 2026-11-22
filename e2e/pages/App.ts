@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { ForgotPasswordPage, ResetPasswordPage, SignInPage } from "./AuthPages";
+import { CollectionPage, MythLibraryPage, MythPage } from "./MythPages";
 import { TraceListPage } from "./TraceListPage";
 import { TraceViewPage } from "./TraceViewPage";
 
@@ -10,6 +11,9 @@ export class App {
   readonly resetPassword: ResetPasswordPage;
   readonly list: TraceListPage;
   readonly trace: TraceViewPage;
+  readonly myths: MythLibraryPage;
+  readonly myth: MythPage;
+  readonly collection: CollectionPage;
 
   constructor(page: Page) {
     this.signIn = new SignInPage(page);
@@ -17,5 +21,8 @@ export class App {
     this.resetPassword = new ResetPasswordPage(page);
     this.list = new TraceListPage(page);
     this.trace = new TraceViewPage(page);
+    this.myths = new MythLibraryPage(page);
+    this.myth = new MythPage(page);
+    this.collection = new CollectionPage(page);
   }
 }

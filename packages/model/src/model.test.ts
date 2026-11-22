@@ -67,6 +67,24 @@ describe("model", () => {
     ).toBe(false);
   });
 
+  test("only derivation ends and tagging targets survive the deletion of what they reference", () => {
+    const kept = entities.flatMap((entity) =>
+      Object.entries(allFields(entity)).flatMap(([key, field]) =>
+        field.type === "ref" && field.onDelete === "keep" ? [`${entity.name}.${key}`] : [],
+      ),
+    );
+    const arcColumns = (name: string, arcName: string) =>
+      entities
+        .find((entity) => entity.name === name)!
+        .arcs![arcName]!.targets.map((target) => `${name}.${arcName}${target}Id`);
+    expect(kept.sort()).toEqual(
+      [...arcColumns("Derivation", "from"), ...arcColumns("Derivation", "to"), ...arcColumns("Tagging", "target")].sort(),
+    );
+    const fieldsOf = (name: string) => allFields(entities.find((entity) => entity.name === name)!);
+    expect(fieldsOf("Citation").targetBeatId).toMatchObject({ onDelete: "cascade" });
+    expect(fieldsOf("Tagging").tagId).toMatchObject({ onDelete: "cascade" });
+  });
+
   test("traces require a real calendar date", () => {
     const trace = { body: "Today I walked by the sea." };
     expect(TraceCreateSchema.safeParse({ ...trace, writtenOn: "2026-11-22" }).success).toBe(true);

@@ -13,6 +13,8 @@
     "test": "bun run --filter '*' test",
     "typecheck": "bun run --filter '*' typecheck",
     "e2e": "bun run --cwd e2e e2e",
-    "e2e:check": "bun run --cwd e2e check"
+    "e2e:check": "bun run --cwd e2e check",
+    "demo": "bun run --cwd e2e demo",
+    "demo:stop": "bun run --cwd e2e demo:stop"
   }
 }

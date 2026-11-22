@@ -1,5 +1,6 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/newsreader';
+@import './narrative/narrative.css';
 
 :root {
   color-scheme: light dark;

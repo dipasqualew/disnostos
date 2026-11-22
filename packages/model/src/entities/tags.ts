@@ -39,13 +39,14 @@ export const Tagging = defineEntity({
         "Journal",
       ],
       "The tagged object, which may be another user's.",
-      { sameOwner: false },
+      { sameOwner: false, onDelete: "keep" },
     ),
   },
   unique: [["tagId", "target"]],
   invariants: [
     "The tagger must be able to see the target when tagging it.",
     "If the target stops being visible to the tagger, the tagging is kept but hidden, and reveals nothing about the target.",
+    "A deleted target counts as not visible. Deleting the tag itself deletes its taggings.",
     "A target's owner never learns that it was tagged, including through counts.",
   ],
 });

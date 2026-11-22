@@ -210,6 +210,7 @@ function generateDocs(): string {
           field.optional ? "optional" : "required",
           field.ownerOnly ? "owner-only" : "",
           field.type === "ref" && field.sameOwner ? "same owner" : "",
+          field.type === "ref" && field.onDelete === "keep" ? "kept when target is deleted" : "",
         ].filter(Boolean);
         return `| \`${key}\` | ${fieldType(field)} | ${flags.join(", ")} | ${field.description} |`;
       });
